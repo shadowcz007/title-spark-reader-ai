@@ -9,83 +9,102 @@ import { ReaderPersonas } from '@/components/ReaderPersonas';
 import { ReviewGenerator } from '@/components/ReviewGenerator';
 import { TitlePreview } from '@/components/TitlePreview';
 
+// LLM API 配置
+const LLM_API_URL = 'https://api.siliconflow.cn/v1/chat/completions';
+const LLM_API_KEY = 'sk-pfoybguqznavgchjhsmmxtiantbkvabehiwxvsidfmqflzvl';
+const LLM_MODEL = 'THUDM/GLM-4-9B-0414';
+
+// LLM API 调用函数
+const callLLMAPI = async (prompt: string) => {
+  try {
+    const response = await fetch(LLM_API_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${LLM_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: LLM_MODEL,
+        messages: [
+          {
+            role: 'user',
+            content: prompt
+          }
+        ]
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`API请求失败: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.choices[0]?.message?.content || '';
+  } catch (error) {
+    console.error('LLM API调用失败:', error);
+    throw error;
+  }
+};
+
 const Index = () => {
   const [title, setTitle] = useState('');
   const [selectedPersona, setSelectedPersona] = useState(null);
   const [review, setReview] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [error, setError] = useState('');
 
   const handleGenerateReview = async () => {
     if (!title.trim() || !selectedPersona) return;
     
     setIsGenerating(true);
-    // 模拟API调用延迟
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    setError('');
     
-    const mockReview = {
-      score: Math.floor(Math.random() * 3) + 7, // 7-9分
-      comment: generateMockComment(selectedPersona, title),
-      tags: generateTags(selectedPersona),
-      suggestions: generateSuggestions(selectedPersona)
-    };
-    
-    setReview(mockReview);
-    setIsGenerating(false);
+    try {
+      // 生成评论
+      const commentPrompt = `作为一个${selectedPersona.name}，请对以下文章标题进行点评，给出具体的建议和改进方向。标题：${title}。请用中文回答，控制在100字以内。`;
+      const comment = await callLLMAPI(commentPrompt);
+      
+      // 生成标签
+      const tagsPrompt = `为以下文章标题生成3个标签，体现${selectedPersona.name}的特点。标题：${title}。请只返回标签，用逗号分隔，不要其他内容。`;
+      const tagsResponse = await callLLMAPI(tagsPrompt);
+      const tags = tagsResponse.split(',').map(tag => tag.trim()).filter(tag => tag);
+      
+      // 生成建议
+      const suggestionsPrompt = `作为${selectedPersona.name}，请为以下文章标题提供3个具体的改进建议。标题：${title}。请只返回建议，用逗号分隔，不要其他内容。`;
+      const suggestionsResponse = await callLLMAPI(suggestionsPrompt);
+      const suggestions = suggestionsResponse.split(',').map(suggestion => suggestion.trim()).filter(suggestion => suggestion);
+      
+      // 生成评分
+      const scorePrompt = `作为${selectedPersona.name}，请为以下文章标题打分（1-10分）。标题：${title}。请只返回数字，不要其他内容。`;
+      const scoreResponse = await callLLMAPI(scorePrompt);
+      const score = parseInt(scoreResponse) || Math.floor(Math.random() * 3) + 7;
+      
+      const generatedReview = {
+        score: Math.max(1, Math.min(10, score)), // 确保评分在1-10范围内
+        comment: comment,
+        tags: tags.length > 0 ? tags : ['实用性强', '可执行'],
+        suggestions: suggestions.length > 0 ? suggestions : ['优化表达', '增强吸引力']
+      };
+      
+      setReview(generatedReview);
+    } catch (error) {
+      console.error('生成点评失败:', error);
+      setError('生成点评失败，请稍后重试');
+      
+      // 如果API调用失败，使用备用模拟数据
+      const fallbackReview = {
+        score: Math.floor(Math.random() * 3) + 7,
+        comment: `作为${selectedPersona.name}，我认为这个标题${title}有一定的吸引力，但还有改进空间。`,
+        tags: ['实用性强', '可执行'],
+        suggestions: ['优化表达', '增强吸引力']
+      };
+      setReview(fallbackReview);
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
-  const generateMockComment = (persona, title) => {
-    const comments = {
-      professional: [
-        `这个标题很有职场针对性，能抓住工作痛点。建议加上具体的数字或时间范围会更有说服力。`,
-        `从职场角度看很实用，不过可以更直接地点出解决方案或收益。`,
-        `标题切中了职场人士的需求，但可以更突出紧迫感和实用性。`
-      ],
-      student: [
-        `作为学生觉得这个标题挺有趣的！不过可以更生动一些，加点网络用语或表情。`,
-        `标题看起来有点严肃，如果能更贴近学生生活会更吸引人。`,
-        `这个话题很棒！建议用更轻松的语气，比如加个问号或感叹号。`
-      ],
-      entrepreneur: [
-        `从创业角度来说，这个标题需要更强的冲击力和商业价值感。`,
-        `标题不够突出创新性和机会感，建议加入更多商业关键词。`,
-        `作为创业者，我希望看到更明确的价值主张和行动指引。`
-      ],
-      techie: [
-        `标题还可以，但缺少技术深度的体现，可以加些专业术语。`,
-        `从技术角度看，这个标题需要更精确的描述和技术细节暗示。`,
-        `建议加入更多技术栈相关的关键词，会更吸引技术人员。`
-      ],
-      creative: [
-        `这个标题缺乏创意火花！可以用更有想象力的表达方式。`,
-        `建议加入更多情感色彩和视觉感，让人一看就有画面感。`,
-        `标题太直白了，用一些比喻或故事化的表达会更有吸引力。`
-      ]
-    };
-    const personaComments = comments[persona.id] || comments.professional;
-    return personaComments[Math.floor(Math.random() * personaComments.length)];
-  };
 
-  const generateTags = (persona) => {
-    const tagMap = {
-      professional: ['实用性强', '职场相关', '可执行'],
-      student: ['轻松有趣', '贴近生活', '易理解'],
-      entrepreneur: ['商业价值', '创新思维', '机会导向'],
-      techie: ['技术含量', '专业性', '实操性'],
-      creative: ['创意十足', '情感丰富', '视觉化']
-    };
-    return tagMap[persona.id] || tagMap.professional;
-  };
-
-  const generateSuggestions = (persona) => {
-    const suggestionMap = {
-      professional: ['加入具体数字', '突出解决方案', '强调ROI'],
-      student: ['使用轻松语气', '加入网络热词', '增加互动性'],
-      entrepreneur: ['突出商业价值', '加入紧迫感', '明确行动指引'],
-      techie: ['添加技术细节', '使用专业术语', '突出创新性'],
-      creative: ['增加情感色彩', '使用比喻手法', '创造画面感']
-    };
-    return suggestionMap[persona.id] || suggestionMap.professional;
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100">
@@ -143,7 +162,7 @@ const Index = () => {
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-2">
                     <Heart className="h-5 w-5 text-red-500" />
-                    <h2 className="text-xl font-semibold">模拟点评</h2>
+                    <h2 className="text-xl font-semibold">AI点评</h2>
                   </div>
                   <Button
                     onClick={handleGenerateReview}
@@ -155,9 +174,15 @@ const Index = () => {
                     ) : (
                       <Sparkles className="h-4 w-4" />
                     )}
-                    {isGenerating ? '生成中...' : '生成点评'}
+                    {isGenerating ? 'AI生成中...' : '生成点评'}
                   </Button>
                 </div>
+                
+                {error && (
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-red-600 text-sm">{error}</p>
+                  </div>
+                )}
 
                 {!title.trim() || !selectedPersona ? (
                   <div className="flex flex-col items-center justify-center h-64 text-gray-500">
