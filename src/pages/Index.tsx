@@ -4,58 +4,57 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Sparkles, RefreshCw, User, BookOpen, Briefcase, Code, Lightbulb, Heart } from 'lucide-react';
+import { Sparkles, RefreshCw, User, BookOpen, Briefcase, Code, Lightbulb, Heart, Settings as SettingsIcon } from 'lucide-react';
 import { ReaderPersonas } from '@/components/ReaderPersonas';
 import { ReviewGenerator } from '@/components/ReviewGenerator';
 import { TitlePreview } from '@/components/TitlePreview';
-
-// LLM API 配置
-const LLM_API_URL = 'https://api.siliconflow.cn/v1/chat/completions';
-const LLM_API_KEY = 'sk-pfoybguqznavgchjhsmmxtiantbkvabehiwxvsidfmqflzvl';
-const LLM_MODEL = 'THUDM/GLM-4-9B-0414';
-
-// LLM API 调用函数
-const callLLMAPI = async (systemPrompt: string, userPrompt: string) => {
-  try {
-    const response = await fetch(LLM_API_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LLM_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: LLM_MODEL,
-        messages: [
-          {
-            role: 'system',
-            content: systemPrompt
-          },
-          {
-            role: 'user',
-            content: userPrompt
-          }
-        ]
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error(`API请求失败: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return data.choices[0]?.message?.content || '';
-  } catch (error) {
-    console.error('LLM API调用失败:', error);
-    throw error;
-  }
-};
+import Settings from '@/components/Settings';
+import { useLLMConfig } from '@/hooks/use-llm-config';
 
 const Index = () => {
+  const { config } = useLLMConfig();
+  const [showSettings, setShowSettings] = useState(false);
   const [title, setTitle] = useState('');
   const [selectedPersona, setSelectedPersona] = useState(null);
   const [review, setReview] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState('');
+
+  // LLM API 调用函数
+  const callLLMAPI = async (systemPrompt: string, userPrompt: string) => {
+    try {
+      const response = await fetch(config.apiUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${config.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: config.model,
+          messages: [
+            {
+              role: 'system',
+              content: systemPrompt
+            },
+            {
+              role: 'user',
+              content: userPrompt
+            }
+          ]
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`API请求失败: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.choices[0]?.message?.content || '';
+    } catch (error) {
+      console.error('LLM API调用失败:', error);
+      throw error;
+    }
+  };
 
   const handleGenerateReview = async () => {
     if (!title.trim() || !selectedPersona) return;
@@ -112,8 +111,6 @@ const Index = () => {
     }
   };
 
-
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100">
       {/* 头部 */}
@@ -128,7 +125,26 @@ const Index = () => {
           <p className="text-gray-600 text-lg max-w-2xl mx-auto">
             基于不同读者画像，智能点评你的文章标题吸引力
           </p>
+          
+          {/* 设置按钮 */}
+          <div className="mt-4">
+            <Button
+              onClick={() => setShowSettings(!showSettings)}
+              variant="outline"
+              className="border-purple-200 text-purple-600 hover:bg-purple-50 px-4 py-2 rounded-xl flex items-center gap-2"
+            >
+              <SettingsIcon className="h-4 w-4" />
+              设置
+            </Button>
+          </div>
         </div>
+
+        {/* 设置面板 */}
+        {showSettings && (
+          <div className="max-w-2xl mx-auto mb-8">
+            <Settings />
+          </div>
+        )}
 
         {/* 主体内容 */}
         <div className="max-w-6xl mx-auto">
