@@ -6,17 +6,36 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Sparkles, RefreshCw, User, BookOpen, Briefcase, Code, Lightbulb, Heart, Settings as SettingsIcon } from 'lucide-react';
 import { ReaderPersonas } from '@/components/ReaderPersonas';
-import { ReviewGenerator } from '@/components/ReviewGenerator';
+import { MultiReviewResults } from '@/components/MultiReviewResults';
 import { TitlePreview } from '@/components/TitlePreview';
 import Settings from '@/components/Settings';
 import { useLLMConfig } from '@/hooks/use-llm-config';
+
+interface Persona {
+  id: string;
+  name: string;
+  icon: React.ComponentType<{ className?: string }>;
+  description: string;
+  characteristics: string[];
+  color: string;
+}
+
+interface Review {
+  title: string;
+  persona: Persona;
+  score: number;
+  comment: string;
+  tags: string[];
+  suggestions: string[];
+}
 
 const Index = () => {
   const { config } = useLLMConfig();
   const [showSettings, setShowSettings] = useState(false);
   const [title, setTitle] = useState('');
-  const [selectedPersona, setSelectedPersona] = useState(null);
-  const [review, setReview] = useState(null);
+  const [titlePool, setTitlePool] = useState<string[]>([]);
+  const [selectedPersonas, setSelectedPersonas] = useState<Persona[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState('');
 
@@ -56,56 +75,91 @@ const Index = () => {
     }
   };
 
-  const handleGenerateReview = async () => {
-    if (!title.trim() || !selectedPersona) return;
-    
-    setIsGenerating(true);
-    setError('');
-    
+  // 处理读者画像选择
+  const handleSelectPersona = (persona: Persona) => {
+    setSelectedPersonas(prev => {
+      if (prev.some(p => p.id === persona.id)) {
+        return prev.filter(p => p.id !== persona.id);
+      } else {
+        return [...prev, persona];
+      }
+    });
+  };
+
+  // 为单个标题和读者画像生成点评
+  const generateReviewForTitleAndPersona = async (title: string, persona: Persona): Promise<Review> => {
     try {
       // 生成评论
-      const commentSystemPrompt = `你是一个${selectedPersona.name}，${selectedPersona.description}。你的特点是：${selectedPersona.characteristics.join('、')}。请用中文回答，控制在100字以内。`;
+      const commentSystemPrompt = `你是一个${persona.name}，${persona.description}。你的特点是：${persona.characteristics.join('、')}。请用中文回答，控制在100字以内。`;
       const commentUserPrompt = `请对以下文章标题进行点评，给出具体的建议和改进方向。标题：${title}`;
       const comment = await callLLMAPI(commentSystemPrompt, commentUserPrompt);
       
       // 生成标签
-      const tagsSystemPrompt = `你是一个${selectedPersona.name}，${selectedPersona.description}。你的特点是：${selectedPersona.characteristics.join('、')}。请只返回标签，用逗号分隔，不要其他内容。`;
+      const tagsSystemPrompt = `你是一个${persona.name}，${persona.description}。你的特点是：${persona.characteristics.join('、')}。请只返回标签，用逗号分隔，不要其他内容。`;
       const tagsUserPrompt = `为以下文章标题生成3个标签，体现你的特点。标题：${title}`;
       const tagsResponse = await callLLMAPI(tagsSystemPrompt, tagsUserPrompt);
       const tags = tagsResponse.split(',').map(tag => tag.trim()).filter(tag => tag);
       
       // 生成建议
-      const suggestionsSystemPrompt = `你是一个${selectedPersona.name}，${selectedPersona.description}。你的特点是：${selectedPersona.characteristics.join('、')}。请只返回建议，用逗号分隔，不要其他内容。`;
+      const suggestionsSystemPrompt = `你是一个${persona.name}，${persona.description}。你的特点是：${persona.characteristics.join('、')}。请只返回建议，用逗号分隔，不要其他内容。`;
       const suggestionsUserPrompt = `请为以下文章标题提供3个具体的改进建议。标题：${title}`;
       const suggestionsResponse = await callLLMAPI(suggestionsSystemPrompt, suggestionsUserPrompt);
       const suggestions = suggestionsResponse.split(',').map(suggestion => suggestion.trim()).filter(suggestion => suggestion);
       
       // 生成评分
-      const scoreSystemPrompt = `你是一个${selectedPersona.name}，${selectedPersona.description}。你的特点是：${selectedPersona.characteristics.join('、')}。请只返回数字，不要其他内容。`;
+      const scoreSystemPrompt = `你是一个${persona.name}，${persona.description}。你的特点是：${persona.characteristics.join('、')}。请只返回数字，不要其他内容。`;
       const scoreUserPrompt = `请为以下文章标题打分（1-10分）。标题：${title}`;
       const scoreResponse = await callLLMAPI(scoreSystemPrompt, scoreUserPrompt);
       const score = parseInt(scoreResponse) || Math.floor(Math.random() * 3) + 7;
       
-      const generatedReview = {
-        score: Math.max(1, Math.min(10, score)), // 确保评分在1-10范围内
+      return {
+        title,
+        persona,
+        score: Math.max(1, Math.min(10, score)),
         comment: comment,
         tags: tags.length > 0 ? tags : ['实用性强', '可执行'],
         suggestions: suggestions.length > 0 ? suggestions : ['优化表达', '增强吸引力']
       };
-      
-      setReview(generatedReview);
     } catch (error) {
-      console.error('生成点评失败:', error);
-      setError('生成点评失败，请稍后重试');
+      console.error(`为标题"${title}"和读者画像"${persona.name}"生成点评失败:`, error);
       
-      // 如果API调用失败，使用备用模拟数据
-      const fallbackReview = {
+      // 返回备用点评
+      return {
+        title,
+        persona,
         score: Math.floor(Math.random() * 3) + 7,
-        comment: `作为${selectedPersona.name}，我认为这个标题${title}有一定的吸引力，但还有改进空间。`,
+        comment: `作为${persona.name}，我认为这个标题${title}有一定的吸引力，但还有改进空间。`,
         tags: ['实用性强', '可执行'],
         suggestions: ['优化表达', '增强吸引力']
       };
-      setReview(fallbackReview);
+    }
+  };
+
+  // 批量生成点评
+  const handleGenerateReviews = async () => {
+    if (!titlePool.length || !selectedPersonas.length) return;
+    
+    setIsGenerating(true);
+    setError('');
+    setReviews([]);
+    
+    try {
+      const allReviews: Review[] = [];
+      
+      // 遍历每个标题和读者画像组合
+      for (const title of titlePool) {
+        for (const persona of selectedPersonas) {
+          const review = await generateReviewForTitleAndPersona(title, persona);
+          allReviews.push(review);
+        }
+      }
+      
+      // 对点评结果进行排序（按评分降序）
+      const sortedReviews = allReviews.sort((a, b) => b.score - a.score);
+      setReviews(sortedReviews);
+    } catch (error) {
+      console.error('批量生成点评失败:', error);
+      setError('生成点评失败，请稍后重试');
     } finally {
       setIsGenerating(false);
     }
@@ -163,7 +217,7 @@ const Index = () => {
                     onChange={(e) => setTitle(e.target.value)}
                     className="text-lg p-4 border-2 border-purple-200 focus:border-purple-500 rounded-xl"
                   />
-                  {title && <TitlePreview title={title} />}
+                  {title && <TitlePreview title={title} onTitlePoolChange={setTitlePool} />}
                 </div>
               </Card>
 
@@ -172,10 +226,15 @@ const Index = () => {
                 <div className="flex items-center gap-2 mb-4">
                   <User className="h-5 w-5 text-blue-600" />
                   <h2 className="text-xl font-semibold">选择读者画像</h2>
+                  {selectedPersonas.length > 0 && (
+                    <Badge variant="secondary" className="bg-purple-100 text-purple-700">
+                      {selectedPersonas.length} 个已选择
+                    </Badge>
+                  )}
                 </div>
                 <ReaderPersonas 
-                  selectedPersona={selectedPersona}
-                  onSelectPersona={setSelectedPersona}
+                  selectedPersonas={selectedPersonas}
+                  onSelectPersona={handleSelectPersona}
                 />
               </Card>
             </div>
@@ -187,10 +246,15 @@ const Index = () => {
                   <div className="flex items-center gap-2">
                     <Heart className="h-5 w-5 text-red-500" />
                     <h2 className="text-xl font-semibold">AI点评</h2>
+                    {reviews.length > 0 && (
+                      <Badge variant="secondary" className="bg-green-100 text-green-700">
+                        {reviews.length} 个点评
+                      </Badge>
+                    )}
                   </div>
                   <Button
-                    onClick={handleGenerateReview}
-                    disabled={!title.trim() || !selectedPersona || isGenerating}
+                    onClick={handleGenerateReviews}
+                    disabled={!titlePool.length || !selectedPersonas.length || isGenerating}
                     className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-6 py-2 rounded-xl flex items-center gap-2"
                   >
                     {isGenerating ? (
@@ -208,19 +272,38 @@ const Index = () => {
                   </div>
                 )}
 
-                {!title.trim() || !selectedPersona ? (
+                {!titlePool.length || !selectedPersonas.length ? (
                   <div className="flex flex-col items-center justify-center h-64 text-gray-500">
                     <BookOpen className="h-16 w-16 mb-4 opacity-50" />
                     <p className="text-lg">请输入标题并选择读者画像</p>
                     <p className="text-sm">我们将为你生成专业的点评建议</p>
+                    {titlePool.length > 0 && (
+                      <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                        <p className="text-sm text-blue-700">
+                          标题池子：{titlePool.length} 个标题
+                        </p>
+                      </div>
+                    )}
+                    {selectedPersonas.length > 0 && (
+                      <div className="mt-2 p-3 bg-green-50 rounded-lg">
+                        <p className="text-sm text-green-700">
+                          已选择：{selectedPersonas.length} 个读者画像
+                        </p>
+                      </div>
+                    )}
                   </div>
-                ) : review ? (
-                  <ReviewGenerator review={review} persona={selectedPersona} />
+                ) : reviews.length > 0 ? (
+                  <MultiReviewResults 
+                    reviews={reviews} 
+                    onRegenerate={handleGenerateReviews}
+                  />
                 ) : (
                   <div className="flex flex-col items-center justify-center h-64 text-gray-500">
                     <Lightbulb className="h-16 w-16 mb-4 opacity-50" />
                     <p className="text-lg">点击生成点评按钮</p>
-                    <p className="text-sm">查看 {selectedPersona?.name} 对你标题的看法</p>
+                    <p className="text-sm">
+                      将为 {titlePool.length} 个标题 × {selectedPersonas.length} 个读者画像生成点评
+                    </p>
                   </div>
                 )}
               </Card>

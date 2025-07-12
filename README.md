@@ -1,107 +1,96 @@
-# 读者模拟器 - AI标题点评工具
+# 读者模拟器 - 智能标题点评系统
 
-## 项目简介
+一个基于AI的智能标题点评系统，能够从不同读者画像的角度对文章标题进行专业点评。
 
-这是一个基于AI的读者模拟器，可以根据不同的读者画像对文章标题进行智能点评。通过设置不同的读者角色（如技术专家、普通用户、行业从业者等），AI会从不同角度分析标题的吸引力和改进建议。
+## ✨ 新功能特性
 
-## 主要功能
+### 🎯 多标题-多读者画像点评
+- **标题池子管理**：支持输入标题 + 生成的多角度标题变体
+- **多选读者画像**：可以同时选择多个读者画像进行点评
+- **批量生成点评**：为每个标题 × 每个读者画像组合生成专业点评
+- **智能排序筛选**：按评分、标题、读者画像等维度排序和筛选结果
 
-- **多角色点评**: 支持多种读者画像，每种角色都有独特的评价标准
-- **智能分析**: AI自动生成评分、标签、评论和改进建议
-- **实时预览**: 输入标题后实时预览效果
-- **LLM API设置**: 支持自定义API密钥、模型和请求地址
+### 🎨 丰富的读者画像
+- **12种专业画像**：职场精英、在校学生、创业者、技术爱好者等
+- **个性化点评**：每个画像都有独特的视角和评价标准
+- **多维度分析**：评分、标签、建议等多维度点评内容
 
-## 新增功能
+### 📊 强大的结果展示
+- **统计信息**：总点评数、平均评分、高分点评数
+- **筛选排序**：支持按评分、标题、读者画像筛选和排序
+- **详细展示**：每个点评包含评分、评论、标签、建议等完整信息
 
-### LLM API 设置
+## 🚀 快速开始
 
-现在支持自定义LLM API配置：
+### 安装依赖
+```bash
+npm install
+```
 
-1. **API请求地址**: 可以设置不同的API端点
-2. **API密钥**: 支持自定义API密钥，带密码显示/隐藏功能
-3. **模型选择**: 支持多种预定义模型，也支持自定义模型名称
-4. **配置管理**: 
-   - 自动保存到浏览器本地存储
-   - 支持测试API连接
-   - 支持重置为默认配置
-   - 支持导入/导出配置
-
-### 使用方法
-
-1. 点击页面顶部的"设置"按钮
-2. 在设置面板中配置你的LLM API参数
-3. 点击"测试连接"验证配置是否正确
-4. 点击"保存配置"保存设置
-5. 返回主页面开始使用
-
-## 项目信息
-
-**URL**: https://lovable.dev/projects/1abf20b7-6276-4e79-9afb-fb3caef8ddb4
-
-## How can I edit this code?
-
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/1abf20b7-6276-4e79-9afb-fb3caef8ddb4) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+### 启动开发服务器
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+### 构建生产版本
+```bash
+npm run build
+```
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## 📖 使用指南
 
-**Use GitHub Codespaces**
+### 1. 输入标题
+在左侧输入框中输入你的文章标题，系统会自动生成多个角度的标题变体。
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### 2. 选择读者画像
+从12种专业读者画像中选择一个或多个，支持多选。
 
-## What technologies are used for this project?
+### 3. 生成点评
+点击"生成点评"按钮，系统将为每个标题 × 每个读者画像组合生成专业点评。
 
-This project is built with:
+### 4. 查看结果
+在右侧查看生成的点评结果，支持按评分、标题、读者画像等维度排序和筛选。
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## 🛠️ 技术栈
 
-## How can I deploy this project?
+- **前端框架**：React + TypeScript
+- **UI组件库**：Shadcn/ui + Tailwind CSS
+- **构建工具**：Vite
+- **AI集成**：支持多种LLM API（OpenAI、Claude等）
 
-Simply open [Lovable](https://lovable.dev/projects/1abf20b7-6276-4e79-9afb-fb3caef8ddb4) and click on Share -> Publish.
+## 🎯 核心功能
 
-## Can I connect a custom domain to my Lovable project?
+### 标题生成
+- 基于输入标题生成5个不同角度的标题变体
+- 情感角度、实用角度、好奇角度、权威角度、故事角度
 
-Yes, you can!
+### 读者画像
+- **职场精英**：注重效率和实用性
+- **在校学生**：充满好奇心和求知欲
+- **创业者**：具备商业敏感和创新思维
+- **技术爱好者**：追求技术深度和前沿趋势
+- **创意工作者**：注重创意表达和视觉体验
+- **服装设计师**：具备时尚敏感和艺术功底
+- **数据分析师**：数据驱动和逻辑思维
+- **视觉设计师**：品牌策划和视觉设计
+- **AI设计师**：AI应用和设计转型
+- **科技媒体编辑**：新闻敏感和深度分析
+- **公共艺术策展人**：艺术策展和社会价值
+- **金融科技从业者**：金融专业和科技理解
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+### 点评内容
+- **评分**：1-10分的吸引力评分
+- **评论**：100字以内的详细点评
+- **标签**：体现读者画像特点的标题特征
+- **建议**：具体的改进建议
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+## 🔧 配置说明
+
+在设置面板中可以配置：
+- LLM API地址和密钥
+- 模型选择
+- 其他参数设置
+
+## �� 许可证
+
+MIT License

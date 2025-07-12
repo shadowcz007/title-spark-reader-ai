@@ -113,19 +113,19 @@ interface Persona {
 }
 
 interface ReaderPersonasProps {
-  selectedPersona: Persona | null;
+  selectedPersonas: Persona[];
   onSelectPersona: (persona: Persona) => void;
 }
 
 export const ReaderPersonas: React.FC<ReaderPersonasProps> = ({
-  selectedPersona,
+  selectedPersonas,
   onSelectPersona
 }) => {
   return (
     <div className="grid grid-cols-1 gap-3">
       {personas.map((persona) => {
         const IconComponent = persona.icon;
-        const isSelected = selectedPersona?.id === persona.id;
+        const isSelected = selectedPersonas.some(p => p.id === persona.id);
         
         return (
           <Card

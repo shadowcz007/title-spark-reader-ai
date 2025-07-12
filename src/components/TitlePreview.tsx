@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Eye, Sparkles, RefreshCw } from 'lucide-react';
@@ -7,6 +7,7 @@ import { useLLMConfig } from '@/hooks/use-llm-config';
 
 interface TitlePreviewProps {
   title: string;
+  onTitlePoolChange?: (titlePool: string[]) => void;
 }
 
 interface GeneratedTitle {
@@ -15,11 +16,17 @@ interface GeneratedTitle {
   focus: string;
 }
 
-export const TitlePreview: React.FC<TitlePreviewProps> = ({ title }) => {
+export const TitlePreview: React.FC<TitlePreviewProps> = ({ title, onTitlePoolChange }) => {
   const { config } = useLLMConfig();
   const [generatedTitles, setGeneratedTitles] = useState<GeneratedTitle[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState('');
+
+  // 当title或generatedTitles变化时，更新标题池子
+  useEffect(() => {
+    const titlePool = [title, ...generatedTitles.map(t => t.title)].filter(t => t.trim());
+    onTitlePoolChange?.(titlePool);
+  }, [title, generatedTitles, onTitlePoolChange]);
 
   // LLM API 调用函数
   const callLLMAPI = async (systemPrompt: string, userPrompt: string) => {
