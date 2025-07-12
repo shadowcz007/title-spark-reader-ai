@@ -15,7 +15,7 @@ const LLM_API_KEY = 'sk-pfoybguqznavgchjhsmmxtiantbkvabehiwxvsidfmqflzvl';
 const LLM_MODEL = 'THUDM/GLM-4-9B-0414';
 
 // LLM API 调用函数
-const callLLMAPI = async (prompt: string) => {
+const callLLMAPI = async (systemPrompt: string, userPrompt: string) => {
   try {
     const response = await fetch(LLM_API_URL, {
       method: 'POST',
@@ -27,8 +27,12 @@ const callLLMAPI = async (prompt: string) => {
         model: LLM_MODEL,
         messages: [
           {
+            role: 'system',
+            content: systemPrompt
+          },
+          {
             role: 'user',
-            content: prompt
+            content: userPrompt
           }
         ]
       })
@@ -61,22 +65,26 @@ const Index = () => {
     
     try {
       // 生成评论
-      const commentPrompt = `作为一个${selectedPersona.name}，请对以下文章标题进行点评，给出具体的建议和改进方向。标题：${title}。请用中文回答，控制在100字以内。`;
-      const comment = await callLLMAPI(commentPrompt);
+      const commentSystemPrompt = `你是一个${selectedPersona.name}，${selectedPersona.description}。你的特点是：${selectedPersona.characteristics.join('、')}。请用中文回答，控制在100字以内。`;
+      const commentUserPrompt = `请对以下文章标题进行点评，给出具体的建议和改进方向。标题：${title}`;
+      const comment = await callLLMAPI(commentSystemPrompt, commentUserPrompt);
       
       // 生成标签
-      const tagsPrompt = `为以下文章标题生成3个标签，体现${selectedPersona.name}的特点。标题：${title}。请只返回标签，用逗号分隔，不要其他内容。`;
-      const tagsResponse = await callLLMAPI(tagsPrompt);
+      const tagsSystemPrompt = `你是一个${selectedPersona.name}，${selectedPersona.description}。你的特点是：${selectedPersona.characteristics.join('、')}。请只返回标签，用逗号分隔，不要其他内容。`;
+      const tagsUserPrompt = `为以下文章标题生成3个标签，体现你的特点。标题：${title}`;
+      const tagsResponse = await callLLMAPI(tagsSystemPrompt, tagsUserPrompt);
       const tags = tagsResponse.split(',').map(tag => tag.trim()).filter(tag => tag);
       
       // 生成建议
-      const suggestionsPrompt = `作为${selectedPersona.name}，请为以下文章标题提供3个具体的改进建议。标题：${title}。请只返回建议，用逗号分隔，不要其他内容。`;
-      const suggestionsResponse = await callLLMAPI(suggestionsPrompt);
+      const suggestionsSystemPrompt = `你是一个${selectedPersona.name}，${selectedPersona.description}。你的特点是：${selectedPersona.characteristics.join('、')}。请只返回建议，用逗号分隔，不要其他内容。`;
+      const suggestionsUserPrompt = `请为以下文章标题提供3个具体的改进建议。标题：${title}`;
+      const suggestionsResponse = await callLLMAPI(suggestionsSystemPrompt, suggestionsUserPrompt);
       const suggestions = suggestionsResponse.split(',').map(suggestion => suggestion.trim()).filter(suggestion => suggestion);
       
       // 生成评分
-      const scorePrompt = `作为${selectedPersona.name}，请为以下文章标题打分（1-10分）。标题：${title}。请只返回数字，不要其他内容。`;
-      const scoreResponse = await callLLMAPI(scorePrompt);
+      const scoreSystemPrompt = `你是一个${selectedPersona.name}，${selectedPersona.description}。你的特点是：${selectedPersona.characteristics.join('、')}。请只返回数字，不要其他内容。`;
+      const scoreUserPrompt = `请为以下文章标题打分（1-10分）。标题：${title}`;
+      const scoreResponse = await callLLMAPI(scoreSystemPrompt, scoreUserPrompt);
       const score = parseInt(scoreResponse) || Math.floor(Math.random() * 3) + 7;
       
       const generatedReview = {
