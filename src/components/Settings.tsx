@@ -145,9 +145,8 @@ const Settings: React.FC = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="THUDM/GLM-4-9B-0414">THUDM/GLM-4-9B-0414</SelectItem>
-              <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
-              <SelectItem value="gpt-4">GPT-4</SelectItem>
-              <SelectItem value="claude-3-sonnet">Claude-3 Sonnet</SelectItem>
+              <SelectItem value="Qwen/Qwen3-8B">Qwen/Qwen3-8B</SelectItem>
+              <SelectItem value="THUDM/GLM-4.1V-9B-Thinking">THUDM/GLM-4.1V-9B-Thinking</SelectItem>
               <SelectItem value="custom">自定义模型</SelectItem>
             </SelectContent>
           </Select>
