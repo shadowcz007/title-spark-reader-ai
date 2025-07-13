@@ -11,6 +11,9 @@ import { TitlePreview } from '@/components/TitlePreview';
 import Settings from '@/components/Settings';
 import { useLLMConfig } from '@/hooks/use-llm-config';
 
+// 导入所有读者画像数据
+import { personas } from '@/components/ReaderPersonas';
+
 interface Persona {
   id: string;
   name: string;
@@ -34,7 +37,7 @@ const Index = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [title, setTitle] = useState('');
   const [titlePool, setTitlePool] = useState<string[]>([]);
-  const [selectedPersonas, setSelectedPersonas] = useState<Persona[]>([]);
+  const [selectedPersonas, setSelectedPersonas] = useState<Persona[]>(personas);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState('');

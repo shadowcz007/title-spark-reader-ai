@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Briefcase, GraduationCap, Lightbulb, Code, Palette, User, Scissors, Monitor, Building2, PenTool, Camera, Globe, Zap } from 'lucide-react';
 
-const personas = [
+export const personas = [
   {
     id: 'professional',
     name: '职场精英',
