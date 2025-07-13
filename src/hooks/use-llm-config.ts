@@ -4,12 +4,14 @@ interface LLMConfig {
   apiUrl: string;
   apiKey: string;
   model: string;
+  mcpUrl: string;
 }
 
 const defaultConfig: LLMConfig = {
   apiUrl: 'https://api.siliconflow.cn/v1/chat/completions',
   apiKey: 'sk-pfoybguqznavgchjhsmmxtiantbkvabehiwxvsidfmqflzvl',
-  model: 'THUDM/GLM-4-9B-0414'
+  model: 'THUDM/GLM-4-9B-0414',
+  mcpUrl: 'http://localhost:2035'
 };
 
 export const useLLMConfig = () => {

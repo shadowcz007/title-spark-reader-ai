@@ -160,6 +160,24 @@ const Settings: React.FC = () => {
           )}
         </div>
 
+        {/* MCP URL 设置 */}
+        <div className="space-y-2">
+          <Label htmlFor="mcpUrl" className="text-sm font-medium">
+            MCP Browser Use 服务地址
+          </Label>
+          <Input
+            id="mcpUrl"
+            type="url"
+            placeholder="http://localhost:2035"
+            value={localConfig.mcpUrl}
+            onChange={(e) => setLocalConfig({ ...localConfig, mcpUrl: e.target.value })}
+            className="border-2 border-purple-200 focus:border-purple-500 rounded-xl"
+          />
+          <p className="text-xs text-gray-500">
+            用于Bing搜索和信息补充的MCP服务地址（browser_search），访问mixlab获取配套mcp服务
+          </p>
+        </div>
+
         {/* 操作按钮 */}
         <div className="flex flex-wrap gap-3 pt-4">
           <Button
