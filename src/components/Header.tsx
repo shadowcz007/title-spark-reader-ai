@@ -4,14 +4,14 @@ import { Settings as SettingsIcon, HelpCircle } from 'lucide-react';
 import { Button } from '@/ui';
 
 interface HeaderProps {
-  currentPage?: 'dashboard' | 'simulate' | 'readers' | 'documents' | 'settings' | 'simulations' | 'feedback' | 'templates' | 'team' | 'help';
+  currentPage?: 'simulate' | 'readers' | 'settings' | 'simulations' | 'feedback' | 'templates' | 'team' | 'help';
   onSettingsClick?: () => void;
 }
 
 const Header: React.FC<HeaderProps> = ({ currentPage, onSettingsClick }) => {
   // const navigate = useNavigate(); // 如果需要跳转可用
   return (
-    <header className="flex items-center justify-between whitespace-nowrap border-b border-solid border-b-[#f0f2f5] px-10 py-3 bg-white/70 backdrop-blur-sm">
+    <header className="flex items-center justify-between whitespace-nowrap border-b border-solid border-b-[#f0f2f5] px-10 py-3 bg-white/60 backdrop-blur-md shadow-sm">
       <div className="flex items-center gap-4 text-[#121416]">
         <div className="size-4">
           <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -30,10 +30,8 @@ const Header: React.FC<HeaderProps> = ({ currentPage, onSettingsClick }) => {
       </div>
       <div className="flex flex-1 justify-end gap-8">
         <div className="flex items-center gap-9">
-          <Link to="/dashboard" className={`text-sm font-medium leading-normal ${currentPage === 'dashboard' ? 'text-[#0c7ff2]' : 'text-[#121416]'}`}>Dashboard</Link>
           <Link to="/simulate" className={`text-sm font-medium leading-normal ${currentPage === 'simulate' ? 'text-[#0c7ff2]' : 'text-[#121416]'}`}>Simulate</Link>
           <Link to="/readers" className={`text-sm font-medium leading-normal ${currentPage === 'readers' ? 'text-[#0c7ff2]' : 'text-[#121416]'}`}>Readers</Link>
-          <Link to="/documents" className={`text-sm font-medium leading-normal ${currentPage === 'documents' ? 'text-[#0c7ff2]' : 'text-[#121416]'}`}>Documents</Link>
           <button
             type="button"
             className={`text-sm font-medium leading-normal bg-transparent border-0 outline-none cursor-pointer ${currentPage === 'settings' ? 'text-[#0c7ff2]' : 'text-[#121416]'}`}

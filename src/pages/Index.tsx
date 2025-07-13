@@ -396,7 +396,7 @@ const Index = () => {
 
 
   return (
-    <div className="relative flex size-full min-h-screen flex-col bg-white group/design-root overflow-x-hidden" style={{ fontFamily: 'Newsreader, "Noto Sans", sans-serif' }}>
+    <div className="relative flex size-full min-h-screen flex-col bg-gradient-to-b from-green-50 via-emerald-50 to-white group/design-root overflow-x-hidden" style={{ fontFamily: 'Newsreader, "Noto Sans", sans-serif' }}>
       <Header currentPage="simulate" onSettingsClick={handleSettingsClick} />
       <div className="layout-container flex h-full grow flex-col">
         {/* Only render content part, popup settings managed by App.tsx */}
