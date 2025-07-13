@@ -1,11 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, Button, Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/ui';
 import { Eye, Sparkles, RefreshCw, Search, ChevronDown, ChevronUp } from 'lucide-react';
 import { useLLMConfig } from '@/hooks/use-llm-config';
-import { MCPService } from '@/services/mcpService';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import MCPService from '@/services/mcpService';
 
 interface TitlePreviewProps {
   title: string;
@@ -27,13 +25,13 @@ export const TitlePreview: React.FC<TitlePreviewProps> = ({ title, onTitlePoolCh
   const [enrichedInfo, setEnrichedInfo] = useState<string>('');
   const [isEnrichedInfoOpen, setIsEnrichedInfoOpen] = useState(false);
 
-  // 当title或generatedTitles变化时，更新标题池子
+  // Update title pool when title or generatedTitles changes
   useEffect(() => {
     const titlePool = [title, ...generatedTitles.map(t => t.title)].filter(t => t.trim());
     onTitlePoolChange?.(titlePool);
   }, [title, generatedTitles, onTitlePoolChange]);
 
-  // LLM API 调用函数
+  // LLM API call function
   const callLLMAPI = async (systemPrompt: string, userPrompt: string) => {
     try {
       const response = await fetch(config.apiUrl, {
@@ -58,36 +56,36 @@ export const TitlePreview: React.FC<TitlePreviewProps> = ({ title, onTitlePoolCh
       });
 
       if (!response.ok) {
-        throw new Error(`API请求失败: ${response.status}`);
+        throw new Error(`API request failed: ${response.status}`);
       }
 
       const data = await response.json();
       return data.choices[0]?.message?.content || '';
     } catch (error) {
-      console.error('LLM API调用失败:', error);
+      console.error('LLM API call failed:', error);
       throw error;
     }
   };
 
-  // 判断信息是否充足
+  // Check information sufficiency
   const checkInformationSufficiency = async (title: string): Promise<{ isSufficient: boolean; reason: string }> => {
     try {
-      const systemPrompt = `你是一个信息充足性评估专家。请分析给定的标题是否包含足够的信息来生成多样化的标题变体。`;
+      const systemPrompt = `You are an information sufficiency assessment expert. Please analyze whether the given title contains sufficient information to generate diverse title variants.`;
       
-      const userPrompt = `请评估以下标题的信息充足性：
+      const userPrompt = `Please evaluate the information sufficiency of the following title:
 
-标题：${title}
+Title: ${title}
 
-评估标准：
-1. 是否包含具体的主题或领域信息
-2. 是否包含明确的目标受众
-3. 是否包含具体的价值主张或核心观点
-4. 是否包含足够的上下文信息
+Evaluation criteria:
+1. Whether it contains specific topic or domain information
+2. Whether it contains clear target audience
+3. Whether it contains specific value proposition or core viewpoint
+4. Whether it contains sufficient contextual information
 
-请返回JSON格式：
+Please return in JSON format:
 {
   "isSufficient": true/false,
-  "reason": "详细说明原因"
+  "reason": "Detailed explanation"
 }`;
 
       const response = await callLLMAPI(systemPrompt, userPrompt);
@@ -96,106 +94,103 @@ export const TitlePreview: React.FC<TitlePreviewProps> = ({ title, onTitlePoolCh
         const result = JSON.parse(response);
         return {
           isSufficient: result.isSufficient || false,
-          reason: result.reason || '无法解析评估结果'
+          reason: result.reason || 'Unable to parse evaluation result'
         };
       } catch (parseError) {
-        // 如果JSON解析失败，使用简单的关键词判断
+        // If JSON parsing fails, use simple keyword judgment
         const hasKeywords = title.length > 10 && 
-          (title.includes('如何') || title.includes('为什么') || title.includes('什么') || 
-           title.includes('技巧') || title.includes('方法') || title.includes('指南'));
+          (title.includes('how') || title.includes('why') || title.includes('what') || 
+           title.includes('tips') || title.includes('methods') || title.includes('guide'));
         
         return {
           isSufficient: hasKeywords,
-          reason: hasKeywords ? '标题包含足够的关键信息' : '标题信息不足，需要补充更多上下文'
+          reason: hasKeywords ? 'Title contains sufficient key information' : 'Title information insufficient, need to supplement more context'
         };
       }
     } catch (error) {
-      console.error('信息充足性评估失败:', error);
+      console.error('Information sufficiency assessment failed:', error);
       return {
         isSufficient: false,
-        reason: '评估失败，建议补充信息'
+        reason: 'Assessment failed, recommend supplementing information'
       };
     }
   };
 
  
-  // 使用MCP服务进行bing搜索，失败时使用LLM扩充信息
+  // Use MCP service for Bing search, fallback to LLM for information enrichment
   const enrichInformationWithMCP = async (title: string): Promise<string> => {
     try {
       setIsEnriching(true);
       
-      // 首先尝试使用MCP服务
-      const mcpService = MCPService.getInstance();
-      const mcpResult = await mcpService.searchAndEnrich(
-        title, 
-        config.apiKey,
-        config.apiUrl,
-        config.model,
-        config.mcpUrl
-      );
+      // First try using MCP service
+      const mcpService = new MCPService({ mcpUrl: config.mcpUrl });
+      const isInitialized = await mcpService.initialize();
       
-      if (mcpResult && mcpResult.trim()) {
-        return mcpResult;
+      if (isInitialized) {
+        const mcpResult = await mcpService.enrichInformation(title);
+        if (mcpResult && mcpResult.trim()) {
+          return mcpResult;
+        }
       }
       
-      // MCP服务失败或返回空结果，使用LLM扩充信息
-      console.log('MCP服务失败，使用LLM扩充信息...');
+      // MCP service failed or returned empty result, use LLM to enrich information
+      console.log('MCP service failed, using LLM to enrich information...');
       return await enrichInformationWithLLM(title);
       
     } catch (error) {
-      console.error('MCP搜索失败:', error);
-      // MCP服务失败，使用LLM扩充信息
-      console.log('MCP服务异常，使用LLM扩充信息...');
+      console.error('MCP search failed:', error);
+      // MCP service failed, use LLM to enrich information
+      console.log('MCP service exception, using LLM to enrich information...');
       return await enrichInformationWithLLM(title);
     } finally {
       setIsEnriching(false);
     }
   };
 
-  // 使用LLM扩充信息
+  // Use LLM to enrich information
   const enrichInformationWithLLM = async (title: string): Promise<string> => {
     try {
-      const systemPrompt = `你是一个信息扩充专家，擅长分析标题并补充相关的背景信息、上下文和细节，使标题更加丰富和具体。`;
+      const systemPrompt = `You are an information enrichment expert, skilled at analyzing titles and supplementing related background information, context, and details to make titles more rich and specific.`;
 
-      const userPrompt = `请分析以下标题，并补充相关的背景信息、上下文和细节，使标题更加丰富和具体：
+      const userPrompt = `Please analyze the following title and supplement related background information, context, and details to make the title more rich and specific:
 
-标题：${title}
+Title: ${title}
 
-请从以下方面补充信息：
-1. 相关的背景知识和上下文
-2. 目标受众的具体特征
-3. 相关的行业趋势或热点
-4. 具体的价值主张或核心观点
-5. 相关的数据、案例或示例
+Please supplement information from the following aspects:
+1. Related background knowledge and context
+2. Specific characteristics of target audience
+3. Related industry trends or hot topics
+4. Specific value propositions or core viewpoints
+5. Related data, cases, or examples
 
-请返回简洁但信息丰富的补充内容，不要超过200字。`;
+Please return concise but information-rich supplementary content, not exceeding 200 words.`;
 
       const response = await callLLMAPI(systemPrompt, userPrompt);
       return response.trim();
     } catch (error) {
-      console.error('LLM信息扩充失败:', error);
+      console.error('LLM information enrichment failed:', error);
       return '';
     }
   };
 
-  // 新增：宽容解析 LLM 返回内容的函数
+  // New: Tolerant parsing function for LLM returned content
   function safeParseTitles(response: string, originalTitle: string, generateFallbackTitles: (title: string) => GeneratedTitle[]): GeneratedTitle[] {
-    // 尝试直接解析
+    // Try direct parsing
     try {
       const parsed = JSON.parse(response);
       if (Array.isArray(parsed)) return parsed;
-    } catch { /* 忽略解析异常 */ }
+    } catch { /* Ignore parsing exceptions */ }
 
-    // 尝试用正则提取 JSON 数组
+    // Try to extract JSON array with regex
     const jsonMatch = response.match(/\[.*\]/s);
     if (jsonMatch) {
       try {
         const parsed = JSON.parse(jsonMatch[0]);
         if (Array.isArray(parsed)) return parsed;
-      } catch { /* 忽略解析异常 */ }
+      } catch { /* Ignore parsing exceptions */ }
     }
 
-    // 尝试用正则提取每组标题
+    // Try to extract each title group with regex
     const itemRegex = /"title"\s*:\s*"([^"]+)"\s*,\s*"angle"\s*:\s*"([^"]+)"\s*,\s*"focus"\s*:\s*"([^"]+)"/g;
     const results: GeneratedTitle[] = [];
     let match;
@@ -208,7 +203,7 @@ export const TitlePreview: React.FC<TitlePreviewProps> = ({ title, onTitlePoolCh
     }
     if (results.length > 0) return results;
 
-    // 最后 fallback
+    // Final fallback
     return generateFallbackTitles(originalTitle);
   }
 
@@ -219,53 +214,53 @@ export const TitlePreview: React.FC<TitlePreviewProps> = ({ title, onTitlePoolCh
     setError('');
     
     try {
-      // 第一步：检查信息充足性
+      // Step 1: Check information sufficiency
       const sufficiencyCheck = await checkInformationSufficiency(title);
       
       const finalTitle = title;
       let additionalContext = '';
       
-      // 如果信息不足，尝试补充信息
+      // If information is insufficient, try to supplement information
       if (!sufficiencyCheck.isSufficient) {
-        console.log('信息不足，正在补充信息...');
-        // 可以选择使用MCP服务或LLM模拟
+        console.log('Information insufficient, supplementing information...');
+        // Can choose to use MCP service or LLM simulation
         const enrichedInfo = await enrichInformationWithMCP(title);
         if (enrichedInfo) {
-          additionalContext = `\n补充信息：${enrichedInfo}`;
+          additionalContext = `\nAdditional context: ${enrichedInfo}`;
           setEnrichedInfo(enrichedInfo);
         }
       }
 
-      const systemPrompt = `你是一个专业的标题优化专家，擅长从不同角度和侧重点生成多样化的标题。请严格按照JSON格式返回结果，不要包含其他内容。`;
+      const systemPrompt = `You are a professional title optimization expert, skilled at generating diverse titles from different angles and focuses. Please return results strictly in JSON format, do not include other content.`;
 
-      const userPrompt = `基于以下标题，生成5个不同角度和侧重点的标题变体，确保多样性：
-\n原标题：${finalTitle}${additionalContext}
-\n请从以下角度考虑：
-1. 情感角度 - 激发读者情感共鸣
-2. 实用角度 - 强调实用价值和可操作性
-3. 好奇角度 - 引发读者好奇心
-4. 权威角度 - 体现专业性和权威性
-5. 故事角度 - 用故事化表达吸引读者
-\n请返回JSON格式：
+      const userPrompt = `Based on the following title, generate 5 title variants with different angles and focuses, ensuring diversity:
+\nOriginal title: ${finalTitle}${additionalContext}
+\nPlease consider the following angles:
+1. Emotional angle - Evoke reader emotional resonance
+2. Practical angle - Emphasize practical value and operability
+3. Curiosity angle - Spark reader curiosity
+4. Authority angle - Reflect professionalism and authority
+5. Story angle - Use storytelling to attract readers
+\nPlease return in JSON format:
 [
   {
-    "title": "生成的标题",
-    "angle": "角度描述",
-    "focus": "侧重点描述"
+    "title": "Generated title",
+    "angle": "Angle description",
+    "focus": "Focus description"
   }
 ]`;
 
       const response = await callLLMAPI(systemPrompt, userPrompt);
-      console.log('LLM原始返回:', response); // 增加日志
+      console.log('LLM original return:', response); // Add log
 
-      // 使用宽容解析
+      // Use tolerant parsing
       const parsedTitles = safeParseTitles(response, title, generateFallbackTitles);
       setGeneratedTitles(parsedTitles);
     } catch (error) {
-      console.error('生成标题失败:', error);
-      setError('生成标题失败，请稍后重试');
+      console.error('Failed to generate titles:', error);
+      setError('Failed to generate titles, please try again later');
       
-      // 使用备用标题
+      // Use fallback titles
       const fallbackTitles = generateFallbackTitles(title);
       setGeneratedTitles(fallbackTitles);
     } finally {
@@ -275,15 +270,15 @@ export const TitlePreview: React.FC<TitlePreviewProps> = ({ title, onTitlePoolCh
 
   const generateFallbackTitles = (originalTitle: string): GeneratedTitle[] => {
     const angles = [
-      { angle: '情感角度', focus: '激发读者情感共鸣' },
-      { angle: '实用角度', focus: '强调实用价值和可操作性' },
-      { angle: '好奇角度', focus: '引发读者好奇心' },
-      { angle: '权威角度', focus: '体现专业性和权威性' },
-      { angle: '故事角度', focus: '用故事化表达吸引读者' }
+      { angle: 'Emotional angle', focus: 'Evoke reader emotional resonance' },
+      { angle: 'Practical angle', focus: 'Emphasize practical value and operability' },
+      { angle: 'Curiosity angle', focus: 'Spark reader curiosity' },
+      { angle: 'Authority angle', focus: 'Reflect professionalism and authority' },
+      { angle: 'Story angle', focus: 'Use storytelling to attract readers' }
     ];
 
     return angles.map(({ angle, focus }, index) => ({
-      title: `${originalTitle} - ${angle}版本${index + 1}`,
+      title: `${originalTitle} - ${angle} Version ${index + 1}`,
       angle,
       focus
     }));
@@ -295,7 +290,7 @@ export const TitlePreview: React.FC<TitlePreviewProps> = ({ title, onTitlePoolCh
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-purple-600" />
-            <span className="text-sm font-medium text-gray-600">多角度标题生成</span>
+            <span className="text-sm font-medium text-gray-600">Multi-Angle Title Generation</span>
           </div>
           <Button
             onClick={generateMultipleTitles}
@@ -306,17 +301,17 @@ export const TitlePreview: React.FC<TitlePreviewProps> = ({ title, onTitlePoolCh
             {isEnriching ? (
               <>
                 <Search className="h-4 w-4 mr-2 animate-spin" />
-                补充信息中...
+                Enriching information...
               </>
             ) : isGenerating ? (
               <>
                 <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                生成中...
+                Generating...
               </>
             ) : (
               <>
                 <Sparkles className="h-4 w-4 mr-2" />
-                生成多角度标题
+                Generate Multi-Angle Titles
               </>
             )}
           </Button>
@@ -335,7 +330,7 @@ export const TitlePreview: React.FC<TitlePreviewProps> = ({ title, onTitlePoolCh
                 <button className="w-full p-3 flex items-center justify-between hover:bg-blue-100 transition-colors">
                   <div className="flex items-center gap-2">
                     <Search className="h-4 w-4 text-blue-600" />
-                    <span className="text-sm font-medium text-blue-700">补充信息</span>
+                    <span className="text-sm font-medium text-blue-700">Additional Information</span>
                   </div>
                   {isEnrichedInfoOpen ? (
                     <ChevronUp className="h-4 w-4 text-blue-600" />
@@ -355,18 +350,18 @@ export const TitlePreview: React.FC<TitlePreviewProps> = ({ title, onTitlePoolCh
 
         {!title.trim() ? (
           <div className="text-gray-500 text-sm text-center py-4">
-            请输入标题开始生成
+            Please enter a title to start generating
           </div>
         ) : (
           <div className="text-gray-600 text-sm">
-            <p>💡 提示：系统会自动判断标题信息是否充足</p>
-            <p>📝 信息不足时会自动补充相关背景信息</p>
+            <p>💡 Tip: The system will automatically judge whether the title information is sufficient</p>
+            <p>📝 When information is insufficient, it will automatically supplement related background information</p>
           </div>
         )}
 
         {generatedTitles.length > 0 && (
           <div className="space-y-3">
-            <h4 className="text-sm font-medium text-gray-700">生成的标题变体：</h4>
+            <h4 className="text-sm font-medium text-gray-700">Generated title variants:</h4>
             {generatedTitles.map((item, index) => (
               <div key={index} className="p-3 bg-white rounded-lg border border-purple-100">
                 <h5 className="font-medium text-gray-900 mb-1">

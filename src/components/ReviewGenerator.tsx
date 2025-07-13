@@ -1,8 +1,6 @@
 
 import React from 'react';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Card, Badge, Button } from '@/ui';
 import { Star, ThumbsUp, Lightbulb, RefreshCw } from 'lucide-react';
 
 interface ReviewGeneratorProps {
@@ -12,7 +10,11 @@ interface ReviewGeneratorProps {
     tags: string[];
     suggestions: string[];
   };
-  persona: any;
+  persona: {
+    name: string;
+    description: string;
+    icon: React.ComponentType<{ className?: string }>;
+  };
 }
 
 export const ReviewGenerator: React.FC<ReviewGeneratorProps> = ({
@@ -110,8 +112,7 @@ export const ReviewGenerator: React.FC<ReviewGeneratorProps> = ({
       {/* 重新生成按钮 */}
       <div className="text-center">
         <Button
-          variant="outline"
-          className="border-purple-200 text-purple-600 hover:bg-purple-50"
+          className="bg-[#0c7ff2] hover:bg-[#0a6fd8] text-white font-semibold py-2 px-4 rounded-lg flex items-center transition-colors"
         >
           <RefreshCw className="h-4 w-4 mr-2" />
           重新生成点评

@@ -9,58 +9,49 @@ interface LLMConfig {
 
 const defaultConfig: LLMConfig = {
   apiUrl: 'https://api.siliconflow.cn/v1/chat/completions',
-  apiKey: 'sk-pfoybguqznavgchjhsmmxtiantbkvabehiwxvsidfmqflzvl',
+  apiKey: '',
   model: 'THUDM/GLM-4-9B-0414',
   mcpUrl: 'http://localhost:2035'
 };
 
 export const useLLMConfig = () => {
   const [config, setConfig] = useState<LLMConfig>(defaultConfig);
-  const [isLoaded, setIsLoaded] = useState(false);
 
-  // 从localStorage加载配置
+  // Load configuration from localStorage
   useEffect(() => {
-    const savedConfig = localStorage.getItem('llm-config');
-    if (savedConfig) {
-      try {
+    try {
+      const savedConfig = localStorage.getItem('llm-config');
+      if (savedConfig) {
         const parsedConfig = JSON.parse(savedConfig);
-        setConfig(parsedConfig);
-      } catch (error) {
-        console.error('加载LLM配置失败:', error);
-        // 如果解析失败，使用默认配置
-        setConfig(defaultConfig);
+        setConfig({ ...defaultConfig, ...parsedConfig });
       }
+    } catch (error) {
+      console.error('Failed to load LLM configuration:', error);
+      // If parsing fails, use default configuration
+      setConfig(defaultConfig);
     }
-    setIsLoaded(true);
   }, []);
 
-  // 更新配置
-  const updateConfig = (newConfig: Partial<LLMConfig>) => {
-    const updatedConfig = { ...config, ...newConfig };
-    setConfig(updatedConfig);
-    
-    // 保存到localStorage
+  // Update configuration
+  const updateConfig = (newConfig: LLMConfig) => {
+    setConfig(newConfig);
+    // Save to localStorage
     try {
-      localStorage.setItem('llm-config', JSON.stringify(updatedConfig));
+      localStorage.setItem('llm-config', JSON.stringify(newConfig));
     } catch (error) {
-      console.error('保存LLM配置失败:', error);
+      console.error('Failed to save LLM configuration:', error);
     }
   };
 
-  // 重置为默认配置
+  // Reset to default configuration
   const resetConfig = () => {
     setConfig(defaultConfig);
     try {
       localStorage.removeItem('llm-config');
     } catch (error) {
-      console.error('重置LLM配置失败:', error);
+      console.error('Failed to reset LLM configuration:', error);
     }
   };
 
-  return {
-    config,
-    isLoaded,
-    updateConfig,
-    resetConfig
-  };
+  return { config, updateConfig, resetConfig };
 }; 

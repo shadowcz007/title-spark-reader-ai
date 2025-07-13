@@ -1,104 +1,103 @@
 
 import React from 'react';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card } from '@/ui';
 import { Briefcase, GraduationCap, Lightbulb, Code, Palette, User, Scissors, Monitor, Building2, PenTool, Camera, Globe, Zap } from 'lucide-react';
 
 export const personas = [
   {
     id: 'professional',
-    name: '职场精英',
+    name: 'Professional',
     icon: Briefcase,
-    description: '在快节奏的职场环境中，你注重效率、成长和实用技能。你经常需要快速学习和应用新知识，时间对你来说非常宝贵。你追求能够直接提升工作效率的解决方案，喜欢结构化的信息和可执行的建议。你关注个人职业发展，希望在工作中展现专业能力和价值。',
-    characteristics: ['追求效率', '注重实用性', '时间宝贵', '职业发展导向'],
+    description: 'In a fast-paced workplace environment, you focus on efficiency, growth, and practical skills. You often need to quickly learn and apply new knowledge, and time is very precious to you. You pursue solutions that can directly improve work efficiency, prefer structured information and actionable advice. You focus on personal career development and hope to demonstrate professional capabilities and value at work.',
+    characteristics: ['Efficiency-driven', 'Practical-oriented', 'Time-conscious', 'Career-focused'],
     color: 'from-blue-500 to-blue-600'
   },
   {
     id: 'student',
-    name: '在校学生',
+    name: 'Student',
     icon: GraduationCap,
-    description: '作为在校学生，你充满好奇心和求知欲，喜欢探索新鲜事物。你正处于知识积累的关键阶段，对学习新技能和了解前沿趋势充满热情。你社交活跃，经常与同学分享和交流想法。你希望找到既有趣又有价值的学习内容，为未来的职业发展做准备。',
-    characteristics: ['好奇心强', '喜欢新鲜事物', '社交活跃', '学习热情高'],
+    description: 'As a student, you are full of curiosity and thirst for knowledge, and enjoy exploring new things. You are in a critical stage of knowledge accumulation and are enthusiastic about learning new skills and understanding cutting-edge trends. You are socially active and often share and exchange ideas with classmates. You hope to find content that is both interesting and valuable for future career development.',
+    characteristics: ['Curious', 'Open to new things', 'Socially active', 'High learning enthusiasm'],
     color: 'from-green-500 to-green-600'
   },
   {
     id: 'entrepreneur',
-    name: '创业者',
+    name: 'Entrepreneur',
     icon: Lightbulb,
-    description: '你是一位充满激情的创业者，具备敏锐的商业嗅觉和创新思维。你善于发现市场机会，敢于承担风险，行动力强。你经常需要快速验证想法，寻找能够帮助业务增长的解决方案。你关注行业趋势，希望找到能够提升竞争力的创新方法。',
-    characteristics: ['商业敏感', '创新思维', '行动力强', '风险承担'],
+    description: 'You are a passionate entrepreneur with keen business acumen and innovative thinking. You are good at discovering market opportunities, dare to take risks, and have strong execution power. You often need to quickly validate ideas and find solutions that can help business growth. You focus on industry trends and hope to find innovative methods that can enhance competitiveness.',
+    characteristics: ['Business-savvy', 'Innovative thinking', 'Strong execution', 'Risk-taking'],
     color: 'from-orange-500 to-orange-600'
   },
   {
     id: 'techie',
-    name: '技术爱好者',
+    name: 'Tech Enthusiast',
     icon: Code,
-    description: '你对技术有着深厚的兴趣和专业知识，追求技术深度和前沿趋势。你习惯用理性的思维分析问题，注重逻辑性和系统性。你经常关注最新的技术发展，希望了解技术如何改变行业和生活方式。你重视技术解决方案的可行性和实用性。',
-    characteristics: ['技术驱动', '追求深度', '理性分析', '前沿关注'],
+    description: 'You have deep interest and professional knowledge in technology, pursuing technical depth and cutting-edge trends. You are accustomed to analyzing problems with rational thinking and focus on logic and systematic approaches. You often follow the latest technological developments and hope to understand how technology changes industries and lifestyles. You value the feasibility and practicality of technical solutions.',
+    characteristics: ['Technology-driven', 'Depth-seeking', 'Rational analysis', 'Frontier-focused'],
     color: 'from-purple-500 to-purple-600'
   },
   {
     id: 'creative',
-    name: '创意工作者',
+    name: 'Creative Professional',
     icon: Palette,
-    description: '你是一位富有创造力的设计师或艺术家，注重创意表达和视觉体验。你有着敏锐的审美感知，善于从艺术和设计的角度思考问题。你重视作品的独特性和原创性，希望创造能够打动人心的内容。你经常需要平衡创意表达和商业需求。',
-    characteristics: ['感性思维', '视觉导向', '创意优先', '审美敏锐'],
+    description: 'You are a creative designer or artist who focuses on creative expression and visual experience. You have keen aesthetic perception and are good at thinking from artistic and design perspectives. You value the uniqueness and originality of your work and hope to create content that can move people. You often need to balance creative expression with business needs.',
+    characteristics: ['Emotional thinking', 'Visual-oriented', 'Creativity-first', 'Aesthetically sensitive'],
     color: 'from-pink-500 to-pink-600'
   },
   {
     id: 'fashion_designer',
-    name: '服装设计师',
+    name: 'Fashion Designer',
     icon: Scissors,
-    description: '你是一位专业的服装设计师，具备深厚的艺术功底和时尚敏感度。你擅长数字建模和快速原型验证，能够将创意想法快速转化为可执行的方案。你关注时尚趋势和消费者需求，希望创造既美观又实用的设计作品。你经常需要与供应链和客户沟通，平衡创意与商业需求。',
-    characteristics: ['时尚敏感', '数字建模', '快速原型', '艺术功底'],
+    description: 'You are a professional fashion designer with solid artistic foundation and fashion sensitivity. You are skilled in digital modeling and rapid prototyping, able to quickly transform creative ideas into executable solutions. You focus on fashion trends and consumer needs, hoping to create designs that are both beautiful and practical. You often need to communicate with supply chains and clients, balancing creativity with business needs.',
+    characteristics: ['Fashion-sensitive', 'Digital modeling', 'Rapid prototyping', 'Artistic foundation'],
     color: 'from-rose-500 to-rose-600'
   },
   {
     id: 'data_analyst',
-    name: '数据分析师',
+    name: 'Data Analyst',
     icon: Monitor,
-    description: '你是一位专业的数据分析师，具备扎实的统计学和编程基础。你善于从海量数据中发现有价值的洞察，为业务决策提供数据支持。你注重分析的准确性和可解释性，希望找到能够提升工作效率的数据驱动解决方案。你经常需要与业务部门沟通，将复杂的数据分析结果转化为可理解的建议。',
-    characteristics: ['数据驱动', '逻辑思维', '业务理解', '技术专业'],
+    description: 'You are a professional data analyst with solid statistics and programming foundation. You are good at discovering valuable insights from massive data and providing data support for business decisions. You focus on the accuracy and interpretability of analysis, hoping to find data-driven solutions that can improve work efficiency. You often need to communicate with business departments, transforming complex data analysis results into understandable recommendations.',
+    characteristics: ['Data-driven', 'Logical thinking', 'Business understanding', 'Technical expertise'],
     color: 'from-indigo-500 to-indigo-600'
   },
   {
     id: 'visual_designer',
-    name: '视觉设计师',
+    name: 'Visual Designer',
     icon: PenTool,
-    description: '你是一位经验丰富的视觉传达设计师，专注于品牌策划和包装设计。你具备深厚的视觉设计功底，善于通过视觉元素传达品牌理念。你关注用户体验和品牌一致性，希望创造能够提升品牌价值的视觉作品。你经常需要与客户和开发团队协作，平衡创意表达和项目需求。',
-    characteristics: ['品牌策划', '视觉设计', '用户体验', '协作沟通'],
+    description: 'You are an experienced visual communication designer, focusing on brand planning and packaging design. You have solid visual design foundation and are good at conveying brand concepts through visual elements. You focus on user experience and brand consistency, hoping to create visual works that can enhance brand value. You often need to collaborate with clients and development teams, balancing creative expression with project needs.',
+    characteristics: ['Brand planning', 'Visual design', 'User experience', 'Collaborative communication'],
     color: 'from-cyan-500 to-cyan-600'
   },
   {
     id: 'ai_designer',
-    name: 'AI设计师',
+    name: 'AI Designer',
     icon: Zap,
-    description: '你是一位转型中的设计师，正在从传统设计向AI辅助设计转变。你具备一定的设计基础，正在学习如何更好地利用AI工具提升设计效率。你希望从更深层的角度理解AI在设计中的应用，找到人机协作的最佳方式。你经常需要与开发团队合作，但希望提升协作效率。',
-    characteristics: ['AI应用', '设计转型', '效率提升', '人机协作'],
+    description: 'You are a designer in transition, moving from traditional design to AI-assisted design. You have certain design foundation and are learning how to better utilize AI tools to improve design efficiency. You hope to understand AI applications in design from a deeper perspective and find the best way for human-machine collaboration. You often need to collaborate with development teams but hope to improve collaboration efficiency.',
+    characteristics: ['AI application', 'Design transition', 'Efficiency improvement', 'Human-machine collaboration'],
     color: 'from-violet-500 to-violet-600'
   },
   {
     id: 'media_editor',
-    name: '科技媒体编辑',
+    name: 'Tech Media Editor',
     icon: Camera,
-    description: '你是一位专业的科技媒体编辑，专注于报道创业者和创新项目。你具备敏锐的新闻嗅觉和深度分析能力，善于发现和传播有价值的科技资讯。你关注行业动态和趋势变化，希望为读者提供准确、及时、有深度的科技报道。你经常需要与创业者、投资人和技术专家交流。',
-    characteristics: ['新闻敏感', '深度分析', '趋势洞察', '专业报道'],
+    description: 'You are a professional tech media editor, focusing on reporting entrepreneurs and innovative projects. You have keen news sense and deep analysis capabilities, good at discovering and spreading valuable tech information. You focus on industry dynamics and trend changes, hoping to provide accurate, timely, and in-depth tech reports for readers. You often need to communicate with entrepreneurs, investors, and technical experts.',
+    characteristics: ['News-sensitive', 'Deep analysis', 'Trend insight', 'Professional reporting'],
     color: 'from-amber-500 to-amber-600'
   },
   {
     id: 'art_curator',
-    name: '公共艺术策展人',
+    name: 'Public Art Curator',
     icon: Globe,
-    description: '你是一位资深的公共艺术设计师和策展人，具备深厚的艺术史和策展理论背景。你善于策划具有社会影响力的艺术项目，关注艺术与公共空间的互动关系。你希望创造能够引发公众思考和参与的艺术体验，推动艺术的社会价值。你经常需要与艺术家、政府机构和公众沟通。',
-    characteristics: ['艺术策展', '公共空间', '社会价值', '文化传播'],
+    description: 'You are a senior public art designer and curator with deep background in art history and curatorial theory. You are good at planning art projects with social impact, focusing on the interactive relationship between art and public space. You hope to create art experiences that can trigger public thinking and participation, promoting the social value of art. You often need to communicate with artists, government agencies, and the public.',
+    characteristics: ['Art curation', 'Public space', 'Social value', 'Cultural communication'],
     color: 'from-emerald-500 to-emerald-600'
   },
   {
     id: 'fintech_professional',
-    name: '金融科技从业者',
+    name: 'FinTech Professional',
     icon: Building2,
-    description: '你是一位在金融科技领域工作的专业人士，专注于为一级市场创业者提供金融服务。你具备深厚的金融知识和科技理解，善于将传统金融服务与创新技术相结合。你关注创业者的融资需求和发展挑战，希望提供能够提升工作效率的金融科技解决方案。你经常需要与创业者、投资机构和监管机构沟通。',
-    characteristics: ['金融专业', '科技理解', '创业服务', '效率提升'],
+    description: 'You are a professional working in the fintech field, focusing on providing financial services for primary market entrepreneurs. You have deep financial knowledge and technology understanding, good at combining traditional financial services with innovative technology. You focus on entrepreneurs\' financing needs and development challenges, hoping to provide fintech solutions that can improve work efficiency. You often need to communicate with entrepreneurs, investment institutions, and regulatory agencies.',
+    characteristics: ['Financial expertise', 'Technology understanding', 'Entrepreneurial services', 'Efficiency improvement'],
     color: 'from-slate-500 to-slate-600'
   }
 ];
@@ -122,27 +121,24 @@ export const ReaderPersonas: React.FC<ReaderPersonasProps> = ({
   onSelectPersona
 }) => {
   return (
-    <div className="flex flex-wrap justify-center gap-4">
+    <div className="flex flex-wrap justify-center gap-6">
       {personas.map((persona) => {
         const IconComponent = persona.icon;
         const isSelected = selectedPersonas.some(p => p.id === persona.id);
         return (
           <Card
             key={persona.id}
-            className={`w-28 h-40 flex flex-col items-center justify-center rounded-2xl shadow bg-white/90 cursor-pointer transition-all duration-300 border-2 p-2 ${
-              isSelected
-                ? 'border-purple-500 bg-purple-50 shadow-xl'
-                : 'border-gray-200 hover:border-gray-300'
-            }`}
+            className={`w-32 h-40 flex flex-col items-center justify-center rounded-2xl border-2 p-2 shadow transition-all duration-300 cursor-pointer bg-white/90
+              ${isSelected
+                ? 'border-[#0c7ff2] bg-blue-50 shadow-xl'
+                : 'border-[#dde1e3] hover:border-[#0c7ff2] hover:shadow-lg'}
+            `}
             onClick={() => onSelectPersona(persona)}
           >
-            {/* 头像大圆形 */}
             <div className={`w-14 h-14 rounded-full bg-gradient-to-r ${persona.color} flex items-center justify-center mb-2`}>
               <IconComponent className="h-7 w-7 text-white" />
             </div>
-            {/* 姓名 */}
-            <div className="font-bold text-center text-sm mt-1">{persona.name}</div>
-            {/* 选中标记 - 移除Badge标签 */}
+            <div className="font-bold text-[#121416] text-base text-center mt-1">{persona.name}</div>
           </Card>
         );
       })}
