@@ -122,48 +122,27 @@ export const ReaderPersonas: React.FC<ReaderPersonasProps> = ({
   onSelectPersona
 }) => {
   return (
-    <div className="grid grid-cols-1 gap-3">
+    <div className="flex flex-wrap justify-center gap-4">
       {personas.map((persona) => {
         const IconComponent = persona.icon;
         const isSelected = selectedPersonas.some(p => p.id === persona.id);
-        
         return (
           <Card
             key={persona.id}
-            className={`p-4 cursor-pointer transition-all duration-300 hover:shadow-md border-2 ${
-              isSelected 
-                ? 'border-purple-500 bg-purple-50 shadow-lg' 
-                : 'border-gray-200 hover:border-gray-300 bg-white'
+            className={`w-28 h-40 flex flex-col items-center justify-center rounded-2xl shadow bg-white/90 cursor-pointer transition-all duration-300 border-2 p-2 ${
+              isSelected
+                ? 'border-purple-500 bg-purple-50 shadow-xl'
+                : 'border-gray-200 hover:border-gray-300'
             }`}
             onClick={() => onSelectPersona(persona)}
           >
-            <div className="flex items-start gap-3">
-              <div className={`w-10 h-10 rounded-lg bg-gradient-to-r ${persona.color} flex items-center justify-center flex-shrink-0`}>
-                <IconComponent className="h-5 w-5 text-white" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <h3 className="font-semibold text-gray-900">{persona.name}</h3>
-                  {isSelected && (
-                    <Badge variant="secondary" className="bg-purple-100 text-purple-700 text-xs">
-                      已选择
-                    </Badge>
-                  )}
-                </div>
-                <p className="text-sm text-gray-600 mb-2">{persona.description}</p>
-                <div className="flex flex-wrap gap-1">
-                  {persona.characteristics.map((char, index) => (
-                    <Badge
-                      key={index}
-                      variant="outline"
-                      className="text-xs py-0 px-2 bg-gray-50"
-                    >
-                      {char}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
+            {/* 头像大圆形 */}
+            <div className={`w-14 h-14 rounded-full bg-gradient-to-r ${persona.color} flex items-center justify-center mb-2`}>
+              <IconComponent className="h-7 w-7 text-white" />
             </div>
+            {/* 姓名 */}
+            <div className="font-bold text-center text-sm mt-1">{persona.name}</div>
+            {/* 选中标记 - 移除Badge标签 */}
           </Card>
         );
       })}

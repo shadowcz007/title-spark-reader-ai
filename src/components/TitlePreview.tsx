@@ -178,6 +178,40 @@ export const TitlePreview: React.FC<TitlePreviewProps> = ({ title, onTitlePoolCh
     }
   };
 
+  // 新增：宽容解析 LLM 返回内容的函数
+  function safeParseTitles(response: string, originalTitle: string, generateFallbackTitles: (title: string) => GeneratedTitle[]): GeneratedTitle[] {
+    // 尝试直接解析
+    try {
+      const parsed = JSON.parse(response);
+      if (Array.isArray(parsed)) return parsed;
+    } catch { /* 忽略解析异常 */ }
+
+    // 尝试用正则提取 JSON 数组
+    const jsonMatch = response.match(/\[.*\]/s);
+    if (jsonMatch) {
+      try {
+        const parsed = JSON.parse(jsonMatch[0]);
+        if (Array.isArray(parsed)) return parsed;
+      } catch { /* 忽略解析异常 */ }
+    }
+
+    // 尝试用正则提取每组标题
+    const itemRegex = /"title"\s*:\s*"([^"]+)"\s*,\s*"angle"\s*:\s*"([^"]+)"\s*,\s*"focus"\s*:\s*"([^"]+)"/g;
+    const results: GeneratedTitle[] = [];
+    let match;
+    while ((match = itemRegex.exec(response)) !== null) {
+      results.push({
+        title: match[1],
+        angle: match[2],
+        focus: match[3]
+      });
+    }
+    if (results.length > 0) return results;
+
+    // 最后 fallback
+    return generateFallbackTitles(originalTitle);
+  }
+
   const generateMultipleTitles = async () => {
     if (!title.trim()) return;
     
@@ -205,17 +239,14 @@ export const TitlePreview: React.FC<TitlePreviewProps> = ({ title, onTitlePoolCh
       const systemPrompt = `你是一个专业的标题优化专家，擅长从不同角度和侧重点生成多样化的标题。请严格按照JSON格式返回结果，不要包含其他内容。`;
 
       const userPrompt = `基于以下标题，生成5个不同角度和侧重点的标题变体，确保多样性：
-
-原标题：${finalTitle}${additionalContext}
-
-请从以下角度考虑：
+\n原标题：${finalTitle}${additionalContext}
+\n请从以下角度考虑：
 1. 情感角度 - 激发读者情感共鸣
 2. 实用角度 - 强调实用价值和可操作性
 3. 好奇角度 - 引发读者好奇心
 4. 权威角度 - 体现专业性和权威性
 5. 故事角度 - 用故事化表达吸引读者
-
-请返回JSON格式：
+\n请返回JSON格式：
 [
   {
     "title": "生成的标题",
@@ -225,19 +256,11 @@ export const TitlePreview: React.FC<TitlePreviewProps> = ({ title, onTitlePoolCh
 ]`;
 
       const response = await callLLMAPI(systemPrompt, userPrompt);
-      
-      try {
-        const parsedTitles = JSON.parse(response);
-        if (Array.isArray(parsedTitles)) {
-          setGeneratedTitles(parsedTitles);
-        } else {
-          throw new Error('返回格式不正确');
-        }
-      } catch (parseError) {
-        // 如果JSON解析失败，尝试从文本中提取标题
-        const fallbackTitles = generateFallbackTitles(title);
-        setGeneratedTitles(fallbackTitles);
-      }
+      console.log('LLM原始返回:', response); // 增加日志
+
+      // 使用宽容解析
+      const parsedTitles = safeParseTitles(response, title, generateFallbackTitles);
+      setGeneratedTitles(parsedTitles);
     } catch (error) {
       console.error('生成标题失败:', error);
       setError('生成标题失败，请稍后重试');
