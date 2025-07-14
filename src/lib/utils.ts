@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import MCPService from '@/services/mcpService';
+import { prompts, Language } from '../prompts';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -24,10 +25,11 @@ export const enrichInformationWithLLM = async (
   title: string,
   apiKey: string,
   apiUrl: string,
-  model: string
+  model: string,
+  lang: Language
 ): Promise<string> => {
-  const systemPrompt = `You are an information enrichment expert, skilled at analyzing titles and supplementing related background information, context, and details to make titles more rich and specific.`;
-  const userPrompt = `Please analyze the following title and supplement related background information, context, and details to make the title more rich and specific:\n\nTitle: ${title}\n\nPlease supplement information from the following aspects:\n1. Related background knowledge and context\n2. Specific characteristics of target audience\n3. Related industry trends or hot topics\n4. Specific value propositions or core viewpoints\n5. Related data, cases, or examples\n\nPlease return concise but information-rich supplementary content, not exceeding 200 words.`;
+  const systemPrompt = prompts.informationEnrichment.system(lang);
+  const userPrompt = prompts.informationEnrichment.user(title, lang);
   const response = await fetch(apiUrl, {
     method: 'POST',
     headers: {
@@ -60,9 +62,9 @@ export const enrichInformationWithMCP = async (
       return mcpResult;
     }
     // MCP 失败则用 LLM
-    return await enrichInformationWithLLM(title, apiKey, apiUrl, model);
+    return await enrichInformationWithLLM(title, apiKey, apiUrl, model, 'zh'); // Default to 'zh' for fallback
   } catch (error) {
-    return await enrichInformationWithLLM(title, apiKey, apiUrl, model);
+    return await enrichInformationWithLLM(title, apiKey, apiUrl, model, 'zh'); // Default to 'zh' for fallback
   }
 };
 
@@ -71,10 +73,11 @@ export const checkInformationSufficiency = async (
   title: string,
   apiKey: string,
   apiUrl: string,
-  model: string
+  model: string,
+  lang: Language
 ): Promise<{ isSufficient: boolean; reason: string }> => {
-  const systemPrompt = `You are an information analysis expert. Please judge whether the information provided by the user is sufficient for generating article titles, and give reasons. If the information is insufficient, please propose specific content that needs to be supplemented. Your output format is JSON: {"isSufficient": true/false, "reason": "reason"}.`;
-  const userPrompt = `The title provided by the user is: ${title}`;
+  const systemPrompt = prompts.informationSufficiency.system(lang);
+  const userPrompt = prompts.informationSufficiency.user(title, lang);
   try {
     const response = await fetch(apiUrl, {
       method: 'POST',
@@ -146,21 +149,22 @@ export const generateMultipleTitlesWithProgress = async (
   model: string,
   mcpUrl: string,
   generateFallbackTitles: (title: string) => VariantTitle[],
+  lang: Language,
   setEnrichedInfo?: (info: string) => void
 ): Promise<VariantTitle[]> => {
   let additionalContext = '';
   // 1. 信息充足性判断
-  const sufficiencyCheck = await checkInformationSufficiency(title, apiKey, apiUrl, model);
+  const sufficiencyCheck = await checkInformationSufficiency(title, apiKey, apiUrl, model, lang);
   if (!sufficiencyCheck.isSufficient) {
     const enrichedInfo = await enrichInformationWithMCP(title, apiKey, apiUrl, model, mcpUrl);
     if (enrichedInfo) {
-      additionalContext = `\nAdditional context: ${enrichedInfo}`;
+      additionalContext = lang === 'zh' ? `\n额外上下文：${enrichedInfo}` : `\nAdditional context: ${enrichedInfo}`;
       setEnrichedInfo?.(enrichedInfo);
     }
   }
   // 2. 多角度标题生成
-  const systemPrompt = `You are a professional title optimization expert, skilled at generating diverse titles from different angles and focuses. Your only output must be a JSON array, do not include any additional text or Markdown code blocks.`;
-  const userPrompt = `Based on the following title, generate 5 title variants with different angles and focuses, ensuring diversity:\n\nOriginal title: ${title}${additionalContext}\n\nPlease consider the following angles:\n1. Emotional angle - Evoke reader emotional resonance\n2. Practical angle - Emphasize practical value and operability\n3. Curiosity angle - Spark reader curiosity\n4. Authority angle - Reflect professionalism and authority\n5. Story angle - Use storytelling to attract readers\n\nYour output must be a JSON array in the following format:\n[\n  {\n    "title": "Generated title",\n    "angle": "Angle description",\n    "focus": "Focus description"\n  }\n]`;
+  const systemPrompt = prompts.titleGeneration.system(lang);
+  const userPrompt = prompts.titleGeneration.user(title, additionalContext, lang);
   const response = await fetch(apiUrl, {
     method: 'POST',
     headers: {

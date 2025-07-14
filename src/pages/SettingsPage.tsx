@@ -2,9 +2,11 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Settings from '@/components/Settings';
+import { useTranslation } from 'react-i18next';
 
 const SettingsPage: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleSettingsClick = () => {
     navigate('/settings');

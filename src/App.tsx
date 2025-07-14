@@ -11,6 +11,7 @@ import ProgressPage from "./pages/ProgressPage";
 import ResultsPage from "./pages/ResultsPage";
 import ReadersPage from "./pages/ReadersPage";
 import { ProgressStage, ProgressState } from "@/types";
+import './i18n';
 
 const queryClient = new QueryClient();
 

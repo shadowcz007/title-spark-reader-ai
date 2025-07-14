@@ -3,14 +3,19 @@ import { useNavigate } from 'react-router-dom';
 import { Card, Badge, Input } from '@/ui';
 import { Sparkles, Users, ArrowLeft, Search, Filter } from 'lucide-react';
 import Header from '@/components/Header';
-import { personas } from '@/components/ReaderPersonas';
+import { getTranslatedPersonas } from '@/components/ReaderPersonas';
 import { useLLMConfig } from '@/hooks/use-llm-config';
+import { useTranslation } from 'react-i18next';
 
 const ReadersPage: React.FC = () => {
   const navigate = useNavigate();
   const { config } = useLLMConfig();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const { t } = useTranslation();
+
+  // 获取翻译后的personas数据
+  const personas = getTranslatedPersonas(t);
 
   const handleBackClick = () => {
     navigate('/');
@@ -45,12 +50,15 @@ const ReadersPage: React.FC = () => {
             {/* 主标题 */}
             <div className="text-center mb-8">
               <h1 className="text-[#121416] text-[32px] font-bold leading-tight tracking-[-0.015em] mb-2">
-                Reader Personas Library
+                {t('readerPersonasLibrary')}
               </h1>
               <p className="text-[#6a7681] text-lg">
-              这些读者画像代表了不同的用户群体，每个画像都有独特的特征和需求。
-                  在标题分析过程中，系统会模拟这些读者的视角，为您的标题提供多维度的反馈和建议。
-                  您可以选择一个或多个画像进行分析，获得更全面的优化建议。
+                {t('theseReaderPersonasRepresentDifferentUserGroups')}
+                {t('inTitleAnalysisProcess')}
+                {t('theSystemWillSimulateThePerspectiveOfTheseReaders')}
+                {t('toProvideMultiDimensionalFeedbackAndSuggestionsForYourTitles')}
+                {t('youCanChooseOneOrMorePersonasForAnalysis')}
+                {t('toObtainMoreComprehensiveOptimizationSuggestions')}
            
               </p>
             </div>
@@ -62,7 +70,7 @@ const ReadersPage: React.FC = () => {
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#6a7681]" />
                   <Input
                     type="text"
-                    placeholder="搜索读者画像..."
+                    placeholder={t('searchReaderPersonas')}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10 bg-white/80 backdrop-blur-sm border-[#dde1e3] focus:border-[#0c7ff2]"
@@ -70,11 +78,11 @@ const ReadersPage: React.FC = () => {
                 </div>
                 <div className="flex gap-2">
                   {[
-                    { key: 'all', label: '全部' },
-                    { key: 'professional', label: '专业类' },
-                    { key: 'creative', label: '创意类' },
-                    { key: 'tech', label: '技术类' },
-                    { key: 'media', label: '媒体类' }
+                    { key: 'all', label: t('all') },
+                    { key: 'professional', label: t('professional') },
+                    { key: 'creative', label: t('creative') },
+                    { key: 'tech', label: t('tech') },
+                    { key: 'media', label: t('media') }
                   ].map((category) => (
                     <button
                       key={category.key}
@@ -94,10 +102,10 @@ const ReadersPage: React.FC = () => {
               {/* 统计信息 */}
               <div className="text-center mt-4">
                 <p className="text-[#6a7681] text-sm">
-                  显示 <span className="font-semibold text-[#0c7ff2]">{filteredPersonas.length}</span> 个读者画像
+                  {t('display')} <span className="font-semibold text-[#0c7ff2]">{filteredPersonas.length}</span> {t('readerPersonas')}
                   {searchTerm && (
                     <span className="ml-2">
-                      (搜索: "{searchTerm}")
+                      ({t('search')}: "{searchTerm}")
                     </span>
                   )}
                 </p>
@@ -110,8 +118,8 @@ const ReadersPage: React.FC = () => {
                 <div className="col-span-2 text-center py-12">
                   <div className="bg-white/70 backdrop-blur-sm shadow-lg rounded-xl p-8 max-w-md mx-auto">
                     <Search className="h-12 w-12 text-[#6a7681] mx-auto mb-4" />
-                    <h3 className="text-[#121416] text-lg font-semibold mb-2">未找到匹配的读者画像</h3>
-                    <p className="text-[#6a7681]">请尝试调整搜索条件或分类筛选</p>
+                    <h3 className="text-[#121416] text-lg font-semibold mb-2">{t('noMatchingReaderPersonasFound')}</h3>
+                    <p className="text-[#6a7681]">{t('pleaseAdjustSearchConditionsOrCategoryFilters')}</p>
                   </div>
                 </div>
               ) : (
@@ -146,7 +154,7 @@ const ReadersPage: React.FC = () => {
                       {/* 详细描述 */}
                       <div className="mb-6">
                         <h4 className="text-[#121416] font-semibold mb-3 text-sm uppercase tracking-wide text-[#6a7681]">
-                          详细描述
+                          {t('detailedDescription')}
                         </h4>
                         <p className="text-[#6a7681] leading-relaxed">
                           {persona.description}
@@ -156,7 +164,7 @@ const ReadersPage: React.FC = () => {
                       {/* 特征标签 */}
                       <div>
                         <h4 className="text-[#121416] font-semibold mb-3 text-sm uppercase tracking-wide text-[#6a7681]">
-                          核心特征
+                          {t('coreCharacteristics')}
                         </h4>
                         <div className="grid grid-cols-2 gap-2">
                           {persona.characteristics.map((characteristic, index) => (

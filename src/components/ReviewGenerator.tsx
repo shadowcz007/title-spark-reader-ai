@@ -2,6 +2,7 @@
 import React from 'react';
 import { Card, Badge, Button } from '@/ui';
 import { Star, ThumbsUp, Lightbulb, RefreshCw } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface ReviewGeneratorProps {
   review: {
@@ -21,6 +22,7 @@ export const ReviewGenerator: React.FC<ReviewGeneratorProps> = ({
   review,
   persona
 }) => {
+  const { t } = useTranslation();
   const getScoreColor = (score: number) => {
     if (score >= 8) return 'text-green-600 bg-green-100';
     if (score >= 6) return 'text-yellow-600 bg-yellow-100';
@@ -28,9 +30,9 @@ export const ReviewGenerator: React.FC<ReviewGeneratorProps> = ({
   };
 
   const getScoreText = (score: number) => {
-    if (score >= 8) return '很有吸引力';
-    if (score >= 6) return '一般吸引力';
-    return '吸引力较低';
+    if (score >= 8) return t('veryAttractive');
+    if (score >= 6) return t('averageAttractiveness');
+    return t('lessAttractive');
   };
 
   return (
@@ -43,7 +45,7 @@ export const ReviewGenerator: React.FC<ReviewGeneratorProps> = ({
               <persona.icon className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h3 className="font-semibold text-lg">{persona.name} 的评价</h3>
+              <h3 className="font-semibold text-lg">{persona.name} {t('review')}</h3>
               <p className="text-sm text-gray-600">{persona.description}</p>
             </div>
           </div>
@@ -64,7 +66,7 @@ export const ReviewGenerator: React.FC<ReviewGeneratorProps> = ({
       <Card className="p-6">
         <div className="flex items-center gap-2 mb-4">
           <ThumbsUp className="h-5 w-5 text-blue-600" />
-          <h4 className="font-semibold text-lg">详细点评</h4>
+          <h4 className="font-semibold text-lg">{t('detailedReview')}</h4>
         </div>
         <p className="text-gray-700 leading-relaxed bg-gray-50 p-4 rounded-lg">
           {review.comment}
@@ -77,7 +79,7 @@ export const ReviewGenerator: React.FC<ReviewGeneratorProps> = ({
         <Card className="p-6">
           <div className="flex items-center gap-2 mb-4">
             <Star className="h-5 w-5 text-purple-600" />
-            <h4 className="font-semibold">标题特征</h4>
+            <h4 className="font-semibold">{t('titleFeatures')}</h4>
           </div>
           <div className="flex flex-wrap gap-2">
             {review.tags.map((tag, index) => (
@@ -96,7 +98,7 @@ export const ReviewGenerator: React.FC<ReviewGeneratorProps> = ({
         <Card className="p-6">
           <div className="flex items-center gap-2 mb-4">
             <Lightbulb className="h-5 w-5 text-orange-600" />
-            <h4 className="font-semibold">优化建议</h4>
+            <h4 className="font-semibold">{t('optimizationSuggestions')}</h4>
           </div>
           <ul className="space-y-2">
             {review.suggestions.map((suggestion, index) => (
@@ -115,7 +117,7 @@ export const ReviewGenerator: React.FC<ReviewGeneratorProps> = ({
           className="bg-[#0c7ff2] hover:bg-[#0a6fd8] text-white font-semibold py-2 px-4 rounded-lg flex items-center transition-colors"
         >
           <RefreshCw className="h-4 w-4 mr-2" />
-          重新生成点评
+          {t('regenerateReview')}
         </Button>
       </div>
     </div>

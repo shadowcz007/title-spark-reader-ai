@@ -4,6 +4,7 @@ import { Card, Button, Collapsible, CollapsibleContent, CollapsibleTrigger } fro
 import { Eye, Sparkles, RefreshCw, Search, ChevronDown, ChevronUp } from 'lucide-react';
 import { useLLMConfig } from '@/hooks/use-llm-config';
 import { checkInformationSufficiency, generateMultipleTitlesWithProgress, VariantTitle } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 
 interface TitlePreviewProps {
@@ -13,6 +14,7 @@ interface TitlePreviewProps {
 
 export const TitlePreview: React.FC<TitlePreviewProps> = ({ title, onTitlePoolChange }) => {
   const { config } = useLLMConfig();
+  const { t } = useTranslation();
   const [generatedTitles, setGeneratedTitles] = useState<VariantTitle[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isEnriching, setIsEnriching] = useState(false);
@@ -80,7 +82,7 @@ export const TitlePreview: React.FC<TitlePreviewProps> = ({ title, onTitlePoolCh
       );
       setGeneratedTitles(parsedTitles);
     } catch (error) {
-      setError('Failed to generate titles, please try again later');
+      setError(t('failedToGenerateTitles'));
       setGeneratedTitles(generateFallbackTitles(title));
     } finally {
       setIsGenerating(false);
@@ -89,15 +91,15 @@ export const TitlePreview: React.FC<TitlePreviewProps> = ({ title, onTitlePoolCh
 
   const generateFallbackTitles = (originalTitle: string): VariantTitle[] => {
     const angles = [
-      { angle: 'Emotional angle', focus: 'Evoke reader emotional resonance' },
-      { angle: 'Practical angle', focus: 'Emphasize practical value and operability' },
-      { angle: 'Curiosity angle', focus: 'Spark reader curiosity' },
-      { angle: 'Authority angle', focus: 'Reflect professionalism and authority' },
-      { angle: 'Story angle', focus: 'Use storytelling to attract readers' }
+      { angle: t('angleEmotional'), focus: t('focusEvokeEmotion') },
+      { angle: t('anglePractical'), focus: t('focusPracticalValue') },
+      { angle: t('angleCuriosity'), focus: t('focusSparkCuriosity') },
+      { angle: t('angleAuthority'), focus: t('focusReflectAuthority') },
+      { angle: t('angleStory'), focus: t('focusUseStorytelling') }
     ];
 
     return angles.map(({ angle, focus }, index) => ({
-      title: `${originalTitle} - ${angle} Version ${index + 1}`,
+      title: t('fallbackTitleVersion', { title: originalTitle, angle, version: index + 1 }),
       angle,
       focus
     }));
@@ -109,7 +111,7 @@ export const TitlePreview: React.FC<TitlePreviewProps> = ({ title, onTitlePoolCh
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-purple-600" />
-            <span className="text-sm font-medium text-gray-600">Multi-Angle Title Generation</span>
+            <span className="text-sm font-medium text-gray-600">{t('multiAngleTitleGeneration')}</span>
           </div>
           <Button
             onClick={generateMultipleTitles}
@@ -120,17 +122,17 @@ export const TitlePreview: React.FC<TitlePreviewProps> = ({ title, onTitlePoolCh
             {isEnriching ? (
               <>
                 <Search className="h-4 w-4 mr-2 animate-spin" />
-                Enriching information...
+                {t('enrichingInfo')}...
               </>
             ) : isGenerating ? (
               <>
                 <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                Generating...
+                {t('generating')}...
               </>
             ) : (
               <>
                 <Sparkles className="h-4 w-4 mr-2" />
-                Generate Multi-Angle Titles
+                {t('generateMultiAngleTitles')}
               </>
             )}
           </Button>
@@ -149,7 +151,7 @@ export const TitlePreview: React.FC<TitlePreviewProps> = ({ title, onTitlePoolCh
                 <button className="w-full p-3 flex items-center justify-between hover:bg-blue-100 transition-colors">
                   <div className="flex items-center gap-2">
                     <Search className="h-4 w-4 text-blue-600" />
-                    <span className="text-sm font-medium text-blue-700">Additional Information</span>
+                    <span className="text-sm font-medium text-blue-700">{t('additionalInfo')}</span>
                   </div>
                   {isEnrichedInfoOpen ? (
                     <ChevronUp className="h-4 w-4 text-blue-600" />
@@ -169,18 +171,18 @@ export const TitlePreview: React.FC<TitlePreviewProps> = ({ title, onTitlePoolCh
 
         {!title.trim() ? (
           <div className="text-gray-500 text-sm text-center py-4">
-            Please enter a title to start generating
+            {t('pleaseEnterTitleToStart')}
           </div>
         ) : (
           <div className="text-gray-600 text-sm">
-            <p>💡 Tip: The system will automatically judge whether the title information is sufficient</p>
-            <p>📝 When information is insufficient, it will automatically supplement related background information</p>
+            <p>💡 {t('tipSufficientInfo')}</p>
+            <p>📝 {t('tipInsufficientInfo')}</p>
           </div>
         )}
 
         {generatedTitles.length > 0 && (
           <div className="space-y-3">
-            <h4 className="text-sm font-medium text-gray-700">Generated title variants:</h4>
+            <h4 className="text-sm font-medium text-gray-700">{t('generatedTitleVariants')}:</h4>
             {generatedTitles.map((item, index) => (
               <div key={index} className="p-3 bg-white rounded-lg border border-purple-100">
                 <h5 className="font-medium text-gray-900 mb-1">

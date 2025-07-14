@@ -3,9 +3,11 @@ import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Home, AlertCircle } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useTranslation } from 'react-i18next';
 
 const NotFound = () => {
   const location = useLocation();
+  const { t } = useTranslation();
 
   useEffect(() => {
     console.error(
@@ -26,12 +28,12 @@ const NotFound = () => {
             </div>
             <h1 className="text-[#121416] text-[32px] font-bold leading-tight mb-2">404</h1>
             <p className="text-[#6a7681] text-base font-normal leading-normal mb-6">
-              抱歉，您访问的页面不存在
+              {t('pageNotFound')}
             </p>
             <Link to="/">
               <Button className="bg-[#0c7ff2] hover:bg-[#0a6fd8] text-white font-semibold py-2 px-6 rounded-lg flex items-center gap-2 mx-auto transition-colors">
                 <Home className="h-4 w-4" />
-                <span>返回首页</span>
+                <span>{t('backToHome')}</span>
               </Button>
             </Link>
           </div>

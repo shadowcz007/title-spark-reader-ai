@@ -14,11 +14,14 @@ import Header from '@/components/Header';
 import { useNavigate } from 'react-router-dom';
 import { enrichInformationWithMCP } from '@/lib/utils';
 import { checkInformationSufficiency, generateMultipleTitlesWithProgress, VariantTitle } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
+import { prompts, Language } from '../prompts';
 
 // Import all reader persona data
-import { personas } from '@/components/ReaderPersonas';
 
 const Index = () => {
+  const { t } = useTranslation();
   const { config } = useLLMConfig();
   const navigate = useNavigate();
   
@@ -87,46 +90,48 @@ const Index = () => {
   // Generate review for single title and reader persona
   const generateReviewForTitleAndPersona = async (title: string, persona: Persona): Promise<Review> => {
     try {
+      const lang = i18n.language as Language;
+
       // Update progress state
       setProgressState(prev => ({
         ...prev,
         currentTitle: title,
         currentPersona: persona.name,
-        stageDescription: `Generating review for ${persona.name}...`
+        stageDescription: t('generatingReviewFor', { name: persona.name })
       }));
 
       // Generate comment
-      const commentSystemPrompt = `You are a ${persona.name}, ${persona.description}. Your characteristics are: ${persona.characteristics.join(', ')}. Please answer in English, keep it within 100 words.`;
-      const commentUserPrompt = `Please provide feedback on the following article title, giving specific suggestions and improvement directions. Title: ${title}`;
+      const commentSystemPrompt = prompts.reviewGeneration.comment.system(persona, lang);
+      const commentUserPrompt = prompts.reviewGeneration.comment.user(title, lang);
       const comment = await callLLMAPI(commentSystemPrompt, commentUserPrompt);
       
       // Generate tags
       setProgressState(prev => ({
         ...prev,
-        stageDescription: `Generating tags for ${persona.name}...`
+        stageDescription: t('generatingTagsFor', { name: persona.name })
       }));
-      const tagsSystemPrompt = `You are a ${persona.name}, ${persona.description}. Your characteristics are: ${persona.characteristics.join(', ')}. Please only return tags, separated by commas, no other content.`;
-      const tagsUserPrompt = `Generate 3 tags for the following article title that reflect your characteristics. Title: ${title}`;
+      const tagsSystemPrompt = prompts.reviewGeneration.tags.system(persona, lang);
+      const tagsUserPrompt = prompts.reviewGeneration.tags.user(title, lang);
       const tagsResponse = await callLLMAPI(tagsSystemPrompt, tagsUserPrompt);
       const tags = tagsResponse.split(',').map(tag => tag.trim()).filter(tag => tag);
       
       // Generate suggestions
       setProgressState(prev => ({
         ...prev,
-        stageDescription: `Generating suggestions for ${persona.name}...`
+        stageDescription: t('generatingSuggestionsFor', { name: persona.name })
       }));
-      const suggestionsSystemPrompt = `You are a ${persona.name}, ${persona.description}. Your characteristics are: ${persona.characteristics.join(', ')}. Please only return suggestions, separated by commas, no other content.`;
-      const suggestionsUserPrompt = `Please provide 3 specific improvement suggestions for the following article title. Title: ${title}`;
+      const suggestionsSystemPrompt = prompts.reviewGeneration.suggestions.system(persona, lang);
+      const suggestionsUserPrompt = prompts.reviewGeneration.suggestions.user(title, lang);
       const suggestionsResponse = await callLLMAPI(suggestionsSystemPrompt, suggestionsUserPrompt);
       const suggestions = suggestionsResponse.split(',').map(suggestion => suggestion.trim()).filter(suggestion => suggestion);
       
       // Generate score
       setProgressState(prev => ({
         ...prev,
-        stageDescription: `Generating score for ${persona.name}...`
+        stageDescription: t('generatingScoreFor', { name: persona.name })
       }));
-      const scoreSystemPrompt = `You are a ${persona.name}, ${persona.description}. Your characteristics are: ${persona.characteristics.join(', ')}. Please only return a number, no other content.`;
-      const scoreUserPrompt = `Please rate the following article title (1-10 points). Title: ${title}`;
+      const scoreSystemPrompt = prompts.reviewGeneration.score.system(persona, lang);
+      const scoreUserPrompt = prompts.reviewGeneration.score.user(title, lang);
       const scoreResponse = await callLLMAPI(scoreSystemPrompt, scoreUserPrompt);
       const score = parseInt(scoreResponse) || Math.floor(Math.random() * 3) + 7;
       
@@ -135,8 +140,8 @@ const Index = () => {
         persona,
         score: Math.max(1, Math.min(10, score)),
         comment: comment,
-        tags: tags.length > 0 ? tags : ['Practical', 'Actionable'],
-        suggestions: suggestions.length > 0 ? suggestions : ['Optimize expression', 'Enhance appeal']
+        tags: tags.length > 0 ? tags : [t('practical'), t('actionable')],
+        suggestions: suggestions.length > 0 ? suggestions : [t('optimizeExpression'), t('enhanceAppeal')]
       };
     } catch (error) {
       console.error(`Failed to generate review for title "${title}" and persona "${persona.name}":`, error);
@@ -146,41 +151,25 @@ const Index = () => {
         title,
         persona,
         score: Math.floor(Math.random() * 3) + 7,
-        comment: `As a ${persona.name}, I think this title "${title}" has some appeal but room for improvement.`,
-        tags: ['Practical', 'Actionable'],
-        suggestions: ['Optimize expression', 'Enhance appeal']
+        comment: t('fallbackReviewComment', { name: persona.name, title: title }),
+        tags: [t('practical'), t('actionable')],
+        suggestions: [t('optimizeExpression'), t('enhanceAppeal')]
       };
     }
   };
 
   // 移除本地 generateMultipleTitlesWithProgress，直接用 utils.ts 的
 
-  // Check information sufficiency function
-  const checkInformationSufficiency = async (title: string): Promise<{ isSufficient: boolean; reason: string }> => {
-    const systemPrompt = `You are an information analysis expert. Please judge whether the information provided by the user is sufficient for generating article titles, and give reasons. If the information is insufficient, please propose specific content that needs to be supplemented. Your output format is JSON: {"isSufficient": true/false, "reason": "reason"}.`;
-    const userPrompt = `The title provided by the user is: ${title}`;
-    try {
-      const response = await callLLMAPI(systemPrompt, userPrompt);
-      const jsonMatch = response.match(/```json\n([\s\S]*?)\n```/);
-      if (jsonMatch && jsonMatch[1]) {
-        return JSON.parse(jsonMatch[1]);
-      } else {
-        return { isSufficient: true, reason: "Unable to parse, default to sufficient" };
-      }
-    } catch (error) {
-      console.error('Failed to check information sufficiency:', error);
-      return { isSufficient: true, reason: 'Check failed, default to sufficient' };
-    }
-  };
+  // Removed local checkInformationSufficiency, using unified version from utils.ts
 
   // Fallback title generation function
   const generateFallbackTitles = (originalTitle: string): VariantTitle[] => {
     return [
-      { title: originalTitle, angle: 'Original', focus: '' },
-      { title: `${originalTitle}: Deep Analysis`, angle: 'Practical angle', focus: 'Depth' },
-      { title: `Exploring ${originalTitle}`, angle: 'Curiosity angle', focus: 'Exploration' },
-      { title: `${originalTitle}: Future Trends`, angle: 'Emotional angle', focus: 'Trends' },
-      { title: `The Story of ${originalTitle}`, angle: 'Story angle', focus: 'Story' },
+      { title: originalTitle, angle: t('angleOriginal'), focus: '' },
+      { title: `${originalTitle}: ${t('deepAnalysis')}`, angle: t('anglePractical'), focus: t('focusDepth') },
+      { title: `${t('exploring')} ${originalTitle}`, angle: t('angleCuriosity'), focus: t('focusExploration') },
+      { title: `${originalTitle}: ${t('futureTrends')}`, angle: t('angleEmotional'), focus: t('focusTrends') },
+      { title: `${t('theStoryOf')} ${originalTitle}`, angle: t('angleStory'), focus: t('focusStory') },
     ];
   };
 
@@ -188,7 +177,7 @@ const Index = () => {
   const [currentPage, setCurrentPage] = useState('input'); // 'input', 'personas', 'progress', 'results'
   const [title, setTitle] = useState('');
   const [titlePool, setTitlePool] = useState<string[]>([]);
-  const [selectedPersonas, setSelectedPersonas] = useState<Persona[]>(personas);
+  const [selectedPersonas, setSelectedPersonas] = useState<Persona[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState('');
@@ -206,7 +195,7 @@ const Index = () => {
 
   const handleGenerate = async () => {
     if (!title.trim()) {
-      setError('Please enter a title or theme.');
+      setError(t('pleaseEnterTitleOrTheme'));
       return;
     }
     setError('');
@@ -216,7 +205,7 @@ const Index = () => {
 
   const handlePersonasContinue = async () => {
     if (selectedPersonas.length === 0) {
-      setError('Please select at least one reader persona.');
+      setError(t('pleaseSelectAtLeastOneReaderPersona'));
       return;
     }
     setError('');
@@ -231,7 +220,7 @@ const Index = () => {
         totalSteps: 5,
         currentTitle: title,
         currentPersona: '',
-        stageDescription: 'Checking title information sufficiency...'
+        stageDescription: t('checkingInfoSufficiency')
       });
 
       const variants = await generateMultipleTitlesWithProgress(
@@ -240,7 +229,8 @@ const Index = () => {
         config.apiUrl,
         config.model,
         config.mcpUrl,
-        generateFallbackTitles
+        generateFallbackTitles,
+        i18n.language as Language
       );
       const allReviews: Review[] = [];
       const totalReviews = variants.length * selectedPersonas.length;
@@ -254,7 +244,7 @@ const Index = () => {
         totalSteps: totalReviews,
         currentTitle: variants[0]?.title || title,
         currentPersona: selectedPersonas[0]?.name || '',
-        stageDescription: `Generating review for ${variants[0]?.title || title} (0%)...`
+        stageDescription: t('generatingReviewForPercent', { title: variants[0]?.title || title, percent: 0 })
       }));
 
       for (const variant of variants) {
@@ -267,7 +257,7 @@ const Index = () => {
             currentStep: completedReviews,
             currentTitle: variant.title,
             currentPersona: persona.name,
-            stageDescription: `Generating review for ${variant.title} (${Math.floor((completedReviews / totalReviews) * 100)}%)`
+            stageDescription: t('generatingReviewForPercent', { title: variant.title, percent: Math.floor((completedReviews / totalReviews) * 100) })
           }));
         }
       }
@@ -289,7 +279,7 @@ const Index = () => {
         totalSteps: totalReviews,
         currentTitle: '',
         currentPersona: '',
-        stageDescription: 'Analysis completed! All title variants have been scored by multiple personas'
+        stageDescription: t('analysisCompleted')
       }));
       
       // Delay jumping to results page to let users see completion status
@@ -299,7 +289,7 @@ const Index = () => {
       
     } catch (err) {
       console.error("Error occurred during generation:", err);
-      setError("An error occurred during generation, please try again.");
+      setError(t('errorDuringGeneration'));
       setIsGenerating(false);
       setCurrentPage('input'); // Return to input page when error occurs
     }
@@ -309,7 +299,7 @@ const Index = () => {
   const handleRegenerate = () => {
     setTitle('');
     setTitlePool([]);
-    setSelectedPersonas(personas); // Reset to all personas or default selection
+    setSelectedPersonas([]); // Reset to all personas or default selection
     setReviews([]);
     setIsGenerating(false);
     setError('');
@@ -349,19 +339,19 @@ const Index = () => {
                 <div className="flex justify-between items-center text-sm text-[#6a7681] mb-6">
                   <div className="flex items-center bg-green-100/80 rounded-full px-3 py-1">
                     <Users className="h-4 w-4 text-green-600 mr-2" />
-                    <span>Select reader personas for precise analysis <span className="font-bold text-[#121416]">11 personas</span></span>
+                    <span>{t('select_reader_personas_info')}</span>
                   </div>
                   <div className="flex items-center text-[#6a7681]">
                     <Sparkles className="h-4 w-4 mr-1" />
-                    <span>Powered by {config.model}</span>
+                    <span>{t('powered_by', { model: config.model })}</span>
                   </div>
                 </div>
 
                 {/* Main content card */}
                 <div className="bg-white shadow-xl rounded-2xl p-6 mb-6">
-                  <h2 className="text-sm font-medium text-[#6a7681] mb-2">Reader Simulator</h2>
+                  <h2 className="text-sm font-medium text-[#6a7681] mb-2">{t('readerSimulator')}</h2>
                   <h3 className="text-[#121416] text-[22px] font-bold leading-tight tracking-[-0.015em] mb-6">
-                    Select Reader Personas
+                    {t('select_reader_personas')}
                   </h3>
                   <div className="grid grid-cols-[repeat(auto-fit,minmax(158px,1fr))] gap-3">
                     <ReaderPersonas 
@@ -377,7 +367,7 @@ const Index = () => {
                     className="bg-green-400 hover:bg-green-500 text-white font-semibold py-2 px-4 rounded-lg flex items-center transition-colors"
                     onClick={handlePersonasContinue}
                   >
-                    <span>Continue Analysis</span>
+                    <span>{t('continue_analysis')}</span>
                   </Button>
                 </div>
               </div>

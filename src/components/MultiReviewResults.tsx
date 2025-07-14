@@ -3,7 +3,8 @@ import { Card, Badge, Button, Select, SelectContent, SelectItem, SelectTrigger, 
 import { Star, ThumbsUp, Lightbulb, Filter, SortAsc, SortDesc } from 'lucide-react';
 import ReviewRadarChart from '@/components/ReviewRadarChart'; // Import the new component
 import { Review, Persona } from '@/types'; // Import Review and Persona types
-import { personas } from '@/components/ReaderPersonas'; // Import personas data
+import { getTranslatedPersonas } from '@/components/ReaderPersonas'; // Import personas data
+import { useTranslation } from 'react-i18next';
 
 interface MultiReviewResultsProps {
   reviews: Review[];
@@ -14,6 +15,7 @@ export const MultiReviewResults: React.FC<MultiReviewResultsProps> = ({
   reviews,
   onRegenerate
 }) => {
+  const { t } = useTranslation();
   const [sortBy, setSortBy] = useState<'score' | 'title' | 'persona'>('score');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [filterPersona, setFilterPersona] = useState<string>('all');
@@ -27,7 +29,7 @@ export const MultiReviewResults: React.FC<MultiReviewResultsProps> = ({
   }, {} as Record<string, Review[]>);
 
   // Statistics for all personas (used by ReviewRadarChart)
-  const allPersonas = personas.map(p => p.name);
+  const allPersonas = getTranslatedPersonas(t).map(p => p.name);
 
   // Sorting and filtering logic
   const sortedAndFilteredReviews = reviews
@@ -76,9 +78,9 @@ export const MultiReviewResults: React.FC<MultiReviewResultsProps> = ({
   };
 
   const getScoreText = (score: number) => {
-    if (score >= 8) return 'Highly Attractive';
-    if (score >= 6) return 'Moderately Attractive';
-    return 'Low Attraction';
+    if (score >= 8) return t('highlyAttractive');
+    if (score >= 6) return t('moderatelyAttractive');
+    return t('lowAttraction');
   };
 
   const getAverageScore = () => {
@@ -95,21 +97,21 @@ export const MultiReviewResults: React.FC<MultiReviewResultsProps> = ({
           <div className="flex items-center gap-4">
             <div className="text-center">
               <div className="text-2xl font-bold text-blue-600">{reviews.length}</div>
-              <div className="text-sm text-gray-600">Total Reviews</div>
+              <div className="text-sm text-gray-600">{t('totalReviews')}</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-green-600">{(reviews.reduce((sum, r) => sum + r.score, 0) / (reviews.length || 1)).toFixed(1)}</div>
-              <div className="text-sm text-gray-600">Average Score</div>
+              <div className="text-sm text-gray-600">{t('averageScore')}</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-purple-600">{reviews.filter(r => r.score >= 8).length}</div>
-              <div className="text-sm text-gray-600">High Score Reviews</div>
+              <div className="text-sm text-gray-600">{t('highScoreReviews')}</div>
             </div>
           </div>
           {onRegenerate && ( 
             <Button onClick={onRegenerate} variant="outline" size="sm">
               <Lightbulb className="h-4 w-4 mr-2" />
-              Regenerate
+              {t('regenerate')}
             </Button>
           )}
         </div>
@@ -128,8 +130,8 @@ export const MultiReviewResults: React.FC<MultiReviewResultsProps> = ({
                 <div>
                   <h3 className="font-bold text-lg mb-1">{title}</h3>
                   <div>
-                    <span className="text-green-600 font-bold mr-4">Total Score: {totalScore}</span>
-                    <span className="text-blue-600 font-bold">Average Score: {avgScore}</span>
+                    <span className="text-green-600 font-bold mr-4">{t('totalScore')}: {totalScore}</span>
+                    <span className="text-blue-600 font-bold">{t('averageScore')}: {avgScore}</span>
                   </div>
                 </div>
                 <div className="w-full md:w-96 h-64">
@@ -167,8 +169,8 @@ export const MultiReviewResults: React.FC<MultiReviewResultsProps> = ({
         <Card className="p-8 text-center">
           <div className="text-gray-500">
             <Star className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p className="text-lg">No matching review results</p>
-            <p className="text-sm">Please adjust filter conditions or regenerate reviews</p>
+            <p className="text-lg">{t('noMatchingReviews')}</p>
+            <p className="text-sm">{t('adjustFiltersOrRegenerate')}</p>
           </div>
         </Card>
       )}

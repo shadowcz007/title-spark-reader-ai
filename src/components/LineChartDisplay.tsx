@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface LineChartDisplayProps {
   data: {
@@ -11,6 +12,7 @@ interface LineChartDisplayProps {
 }
 
 const LineChartDisplay: React.FC<LineChartDisplayProps> = ({ data }) => {
+  const { t } = useTranslation();
   // For simplicity, we'll use fixed points for the SVG path, but scale them based on input data
   // Max score is 100 for percentage
   const points = [
@@ -69,11 +71,11 @@ const LineChartDisplay: React.FC<LineChartDisplayProps> = ({ data }) => {
         </defs>
       </svg>
       <div className="flex justify-around">
-        <p className="text-[#6a7681] text-[13px] font-bold leading-normal tracking-[0.015em]">Engagement</p>
-        <p className="text-[#6a7681] text-[13px] font-bold leading-normal tracking-[0.015em]">Clarity</p>
-        <p className="text-[#6a7681] text-[13px] font-bold leading-normal tracking-[0.015em]">Relevance</p>
-        <p className="text-[#6a7681] text-[13px] font-bold leading-normal tracking-[0.015em]">Interest</p>
-        <p className="text-[#6a7681] text-[13px] font-bold leading-normal tracking-[0.015em]">Understanding</p>
+        <p className="text-[#6a7681] text-[13px] font-bold leading-normal tracking-[0.015em]">{t('engagement')}</p>
+        <p className="text-[#6a7681] text-[13px] font-bold leading-normal tracking-[0.015em]">{t('clarity')}</p>
+        <p className="text-[#6a7681] text-[13px] font-bold leading-normal tracking-[0.015em]">{t('relevance')}</p>
+        <p className="text-[#6a7681] text-[13px] font-bold leading-normal tracking-[0.015em]">{t('interest')}</p>
+        <p className="text-[#6a7681] text-[13px] font-bold leading-normal tracking-[0.015em]">{t('understanding')}</p>
       </div>
     </div>
   );
