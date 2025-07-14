@@ -40,13 +40,7 @@ const Header: React.FC<HeaderProps> = ({ currentPage, onSettingsClick }) => {
             Settings
           </button>
         </div>
-        <Button
-          className="bg-[#0c7ff2] hover:bg-[#0a6fd8] text-white font-semibold h-10 px-4 rounded-lg flex items-center transition-colors min-w-0"
-        >
-          <div className="text-white" data-icon="Question" data-size="20px" data-weight="regular">
-            <HelpCircle size={20} />
-          </div>
-        </Button>
+       
         <div
           className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10"
           style={{ backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuC_7pGzkq3D9hpYdig4lhn2AfOiw2-UE5q9kW9Kjo-4qk5ye-wzP1FMV3Kj88amrgJnR7azI1CesO5jmcJynqRMZ_ExRKu79icE-i4mqSTAV10gpVsFHH_lg81iLaxGctQgzdTqFKVrxpy5JP-BvEYD2ikXX-EMNRl7Uhz3iw3VleEbmQsPhp0KbuN9EiVd6LXKVYTOENsXOL_lSTBKmpjjsJlay9yjX7Xe9RObzD-r8uwr-k9lXq0ljrylOWK8sTaoCYZdN0XAiGML")' }}

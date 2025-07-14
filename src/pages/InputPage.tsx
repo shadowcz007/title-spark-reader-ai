@@ -53,7 +53,7 @@ const InputPage: React.FC<InputPageProps> = ({ title, onTitleChange, onGenerate 
           <div className="flex justify-between items-center text-sm text-[#6a7681] mb-6">
             <div className="flex items-center bg-green-100/80 rounded-full px-3 py-1">
               <TrendingUp className="h-4 w-4 text-green-600 mr-2" />
-              <span>Average engagement boost of <span className="font-bold text-[#121416]">+156%</span> in reader retention</span>
+              <span>+156% engagement boost</span>
             </div>
             <div className="flex items-center text-[#6a7681]">
               <Sparkles className="h-4 w-4 mr-1" />
@@ -68,10 +68,10 @@ const InputPage: React.FC<InputPageProps> = ({ title, onTitleChange, onGenerate 
             {/* 输入区域 */}
             <div className="flex items-start">
               <div className="border-l-4 border-green-400 h-10 mr-4"></div>
-              <div className="flex-grow">
+              <div className="flex-grow mr-4">
                 <Input
                   placeholder="Enter your article title or theme..."
-                  className="w-full text-2xl placeholder-[#dbe0e6] border-none focus:ring-0 p-0 bg-transparent text-[#121416] font-medium"
+                  className="w-full text-2xl placeholder-[#dbe0e6] border-none focus:ring-0 p-0 bg-transparent text-[#121416] font-medium pl-2"
                   value={title}
                   onChange={onTitleChange}
                 />

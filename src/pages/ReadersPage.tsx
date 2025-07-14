@@ -41,36 +41,17 @@ const ReadersPage: React.FC = () => {
       <div className="layout-container flex h-full grow flex-col">
         <div className="min-h-screen bg-gradient-to-b from-green-50 via-emerald-50 to-white p-4">
           <div className="w-full max-w-7xl mx-auto">
-            {/* 顶部信息栏 */}
-            <div className="flex justify-between items-center text-sm text-[#6a7681] mb-6">
-              <div className="flex items-center bg-green-100/80 rounded-full px-3 py-1">
-                <Users className="h-4 w-4 text-green-600 mr-2" />
-                <span>Reader Personas Library <span className="font-bold text-[#121416]">{personas.length} personas</span></span>
-              </div>
-              <div className="flex items-center text-[#6a7681]">
-                <Sparkles className="h-4 w-4 mr-1" />
-                <span>Powered by {config.model}</span>
-              </div>
-            </div>
-
-            {/* 返回按钮 */}
-            <div className="mb-6">
-              <button
-                onClick={handleBackClick}
-                className="flex items-center gap-2 text-[#6a7681] hover:text-[#0c7ff2] transition-colors"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                <span>返回首页</span>
-              </button>
-            </div>
-
+          
             {/* 主标题 */}
             <div className="text-center mb-8">
               <h1 className="text-[#121416] text-[32px] font-bold leading-tight tracking-[-0.015em] mb-2">
                 Reader Personas Library
               </h1>
               <p className="text-[#6a7681] text-lg">
-                深入了解我们的读者画像，每个画像都代表不同的读者群体和需求
+              这些读者画像代表了不同的用户群体，每个画像都有独特的特征和需求。
+                  在标题分析过程中，系统会模拟这些读者的视角，为您的标题提供多维度的反馈和建议。
+                  您可以选择一个或多个画像进行分析，获得更全面的优化建议。
+           
               </p>
             </div>
 
@@ -194,19 +175,7 @@ const ReadersPage: React.FC = () => {
               )}
             </div>
 
-            {/* 底部说明 */}
-            <div className="mt-12 text-center">
-              <div className="bg-white/70 backdrop-blur-sm shadow-lg rounded-xl p-6 max-w-2xl mx-auto">
-                <h3 className="text-[#121416] text-lg font-semibold mb-3">
-                  如何使用读者画像
-                </h3>
-                <p className="text-[#6a7681] leading-relaxed">
-                  这些读者画像代表了不同的用户群体，每个画像都有独特的特征和需求。
-                  在标题分析过程中，系统会模拟这些读者的视角，为您的标题提供多维度的反馈和建议。
-                  您可以选择一个或多个画像进行分析，获得更全面的优化建议。
-                </p>
-              </div>
-            </div>
+           
           </div>
         </div>
       </div>
