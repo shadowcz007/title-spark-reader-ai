@@ -1,17 +1,27 @@
 import { useState, useEffect } from 'react';
 
+export interface FeatureStatus {
+  browserSearch: boolean;
+  databaseQuery: boolean;
+}
+
 interface LLMConfig {
   apiUrl: string;
   apiKey: string;
   model: string;
   mcpUrl: string;
+  featureStatus?: FeatureStatus;
 }
 
 const defaultConfig: LLMConfig = {
   apiUrl: 'https://api.siliconflow.cn/v1/chat/completions',
   apiKey: '',
   model: 'THUDM/GLM-4-9B-0414',
-  mcpUrl: 'http://localhost:2035'
+  mcpUrl: 'http://localhost:2035',
+  featureStatus: {
+    browserSearch: false,
+    databaseQuery: false
+  }
 };
 
 export const useLLMConfig = () => {

@@ -2,10 +2,22 @@ import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import MCPService from '@/services/mcpService';
 import { prompts, Language } from '../prompts';
+import { FeatureStatus } from '@/hooks/use-llm-config';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
+
+export const checkTools = async (
+  mcpUrl: string
+)  => {
+  const mcpService = MCPService.getInstance();
+  await mcpService.initialize(mcpUrl);
+  const tools=mcpService.getTools();
+  // const mcpResult = await mcpService.searchAndEnrich(title, apiKey, apiUrl, model, mcpUrl);
+  await mcpService.disconnect();
+  return tools;
+};
 
 export const enrichInformationWithMCPBase = async (
   title: string,
@@ -54,17 +66,35 @@ export const enrichInformationWithMCP = async (
   apiKey: string,
   apiUrl: string,
   model: string,
-  mcpUrl: string
+  mcpUrl: string,
+  featureStatus?: FeatureStatus
 ): Promise<string> => {
   try {
+    // 优先用featureStatus判断
+    if (featureStatus && featureStatus.browserSearch === false) {
+      // 如果没有搜索工具，直接使用LLM
+      console.log('Browser search tool not available (from config), falling back to LLM');
+      return await enrichInformationWithLLM(title, apiKey, apiUrl, model, 'zh');
+    }
+    // 否则再检查工具可用性
+    const tools = await checkTools(mcpUrl);
+    const toolNames = Array.isArray(tools) ? Array.from(tools, (t: { name: string }) => t.name) : [];
+    const hasBrowserSearch = toolNames.includes('browser.browser_search') || 
+                           toolNames.includes('mcp_miner_browser_browser_search');
+    if (!hasBrowserSearch) {
+      console.log('Browser search tool not available, falling back to LLM');
+      return await enrichInformationWithLLM(title, apiKey, apiUrl, model, 'zh');
+    }
+    // 有工具则尝试使用MCP
     const mcpResult = await enrichInformationWithMCPBase(title, apiKey, apiUrl, model, mcpUrl);
     if (mcpResult && mcpResult.trim()) {
       return mcpResult;
     }
     // MCP 失败则用 LLM
-    return await enrichInformationWithLLM(title, apiKey, apiUrl, model, 'zh'); // Default to 'zh' for fallback
+    return await enrichInformationWithLLM(title, apiKey, apiUrl, model, 'zh');
   } catch (error) {
-    return await enrichInformationWithLLM(title, apiKey, apiUrl, model, 'zh'); // Default to 'zh' for fallback
+    console.log('MCP enrichment failed, falling back to LLM:', error);
+    return await enrichInformationWithLLM(title, apiKey, apiUrl, model, 'zh');
   }
 };
 

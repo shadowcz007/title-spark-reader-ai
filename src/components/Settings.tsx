@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui';
-import { Settings as SettingsIcon, Save, Eye, EyeOff, TestTube, Sparkles } from 'lucide-react';
+import { Settings as SettingsIcon, Save, Eye, EyeOff, TestTube, Sparkles, CheckCircle, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useLLMConfig } from '@/hooks/use-llm-config';
-import {enrichInformationWithMCPBase} from '@/lib/utils'
+import { FeatureStatus } from '@/hooks/use-llm-config';
+import {checkTools} from '@/lib/utils'
 import { useTranslation } from 'react-i18next';
 
 const Settings: React.FC = () => {
@@ -12,6 +13,13 @@ const Settings: React.FC = () => {
   const [localConfig, setLocalConfig] = useState(config);
   const [showApiKey, setShowApiKey] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
+  // 初始化时从config读取featureStatus
+  const [featureStatus, setFeatureStatus] = useState<FeatureStatus>(config.featureStatus || { browserSearch: false, databaseQuery: false });
+
+  // 新增：每次config变化时自动同步featureStatus
+  useEffect(() => {
+    setFeatureStatus(config.featureStatus || { browserSearch: false, databaseQuery: false });
+  }, [config]);
   const { toast } = useToast();
 
   // Sync localConfig when config updates
@@ -74,17 +82,38 @@ const Settings: React.FC = () => {
     console.log(localConfig);
     setIsTesting(true);
     try {
-      const mcpResult = await enrichInformationWithMCPBase(
-        'test',
-        localConfig.apiKey,
-        localConfig.apiUrl,
-        localConfig.model,
+      const tools = await checkTools( 
         localConfig.mcpUrl
       );
-      if (mcpResult) {
+      console.log(tools);
+      
+      // 检查所有工具的可用性
+      const toolNames = Array.isArray(tools) ? Array.from(tools, t => t.name) : [];
+      
+      const browserSearchAvailable = toolNames.includes('browser.browser_search') || 
+                                   toolNames.includes('mcp_miner_browser_browser_search');
+      const databaseQueryAvailable = toolNames.includes('get_database_names') && 
+                                   toolNames.includes('query_databases') ||
+                                   (toolNames.includes('mcp_miner_get_database_names') &&
+                                    toolNames.includes('mcp_miner_query_databases'));
+      
+      // 更新功能状态
+      setFeatureStatus({
+        browserSearch: browserSearchAvailable,
+        databaseQuery: databaseQueryAvailable
+      });
+      
+      // 存储到config
+      updateConfig({ ...localConfig, featureStatus: { browserSearch: browserSearchAvailable, databaseQuery: databaseQueryAvailable } });
+
+      if (browserSearchAvailable || databaseQueryAvailable) {
+        const availableFeatures: string[] = [];
+        if (browserSearchAvailable) availableFeatures.push(t('browserSearchFeature'));
+        if (databaseQueryAvailable) availableFeatures.push(t('databaseQueryFeature'));
+        
         toast({
           title: t('mcpConnectSuccess'),
-          description: t('mcpConnectSuccessDesc'),
+          description: t('mcpConnectSuccessWithFeatures', { features: availableFeatures.join(', ') }),
         });
       } else {
         toast({
@@ -94,6 +123,12 @@ const Settings: React.FC = () => {
         });
       }
     } catch (error) {
+      // 重置功能状态
+      setFeatureStatus({
+        browserSearch: false,
+        databaseQuery: false
+      });
+      
       toast({
         title: t('mcpConnectError'),
         description: t('mcpConnectErrorDesc', { error: error instanceof Error ? error.message : t('unknownError') }),
@@ -230,6 +265,31 @@ const Settings: React.FC = () => {
                 </p>
               </div>
 
+              {/* 功能状态显示 */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-[#121416]">
+                  {t('availableFeatures')}
+                </Label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  <div className="flex items-center space-x-2 p-2 border rounded-lg">
+                    {featureStatus.browserSearch ? (
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <XCircle className="h-4 w-4 text-red-500" />
+                    )}
+                    <span className="text-sm text-[#121416]">{t('browserSearchFeature')}</span>
+                  </div>
+                  <div className="flex items-center space-x-2 p-2 border rounded-lg">
+                    {featureStatus.databaseQuery ? (
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <XCircle className="h-4 w-4 text-red-500" />
+                    )}
+                    <span className="text-sm text-[#121416]">{t('databaseQueryFeature')}</span>
+                  </div>
+                </div>
+              </div>
+
               {/* Action Buttons */}
               <div className="flex flex-wrap gap-3 pt-4">
                 <Button
@@ -241,7 +301,7 @@ const Settings: React.FC = () => {
                 </Button>
                 
                 <Button
-                  onClick={testAPI}
+                  onClick={testMCP}
                   disabled={isTesting}
                   variant="outline"
                   className="border-[#dde1e3] text-[#121416] hover:bg-[#f8f9fa] px-4 py-2 rounded-lg flex items-center transition-colors"
@@ -250,16 +310,6 @@ const Settings: React.FC = () => {
                   {isTesting ? t('testing') : t('testAPIConnection')}
                 </Button>
 
-                <Button
-                  onClick={testMCP}
-                  disabled={isTesting}
-                  variant="outline"
-                  className="border-[#dde1e3] text-[#121416] hover:bg-[#f8f9fa] px-4 py-2 rounded-lg flex items-center transition-colors"
-                >
-                  <TestTube className="h-4 w-4 mr-2" />
-                  {isTesting ? t('testing') : t('testMCPService')}
-                </Button>
-                
                 <Button
                   onClick={resetToDefault}
                   variant="outline"

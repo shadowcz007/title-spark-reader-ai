@@ -20,6 +20,10 @@ export class MCPService {
     return MCPService.instance;
   }
 
+  public getTools(): any[] {  
+    return this.tools;
+  }
+
   public async initialize(mcpUrl?: string): Promise<void> {
     // console.log(mcpUrl);
     try {
@@ -29,6 +33,7 @@ export class MCPService {
       
       this.mcpClient = mcpClient;
       this.tools = tools as unknown[];
+      // console.log(this.tools);
       this.toolsFunctionCall = toolsFunctionCall as unknown[];
       this.systemPrompts = systemPrompts as unknown[];
       return true;

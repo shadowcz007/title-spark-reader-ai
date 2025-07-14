@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 
 interface HeaderProps {
-  currentPage?: 'simulate' | 'readers' | 'settings' | 'simulations' | 'feedback' | 'templates' | 'team' | 'help';
+  currentPage?: 'simulate' | 'readers' | 'settings' | 'simulations' | 'feedback' | 'templates' | 'team' | 'help' | 'news';
   onSettingsClick?: () => void;
 }
 
@@ -34,6 +34,7 @@ const Header: React.FC<HeaderProps> = ({ currentPage, onSettingsClick }) => {
       <div className="flex flex-1 justify-end gap-8">
         <div className="flex items-center gap-9">
           <Link to="/simulate" className={`text-sm font-medium leading-normal ${currentPage === 'simulate' ? 'text-[#0c7ff2]' : 'text-[#121416]'}`}>{t('simulate')}</Link>
+          <Link to="/news" className={`text-sm font-medium leading-normal ${currentPage === 'news' ? 'text-[#0c7ff2]' : 'text-[#121416]'}`}>{t('news')}</Link>
           <Link to="/readers" className={`text-sm font-medium leading-normal ${currentPage === 'readers' ? 'text-[#0c7ff2]' : 'text-[#121416]'}`}>{t('readers')}</Link>
           <button
             type="button"
