@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, Button, Input, Badge } from '@/ui';
+import { Card, Button, Input, Badge, Textarea } from '@/ui';
 import { Sparkles, Newspaper, Clock, Search, Calendar, Database, RefreshCw } from 'lucide-react';
 import Header from '@/components/Header';
 import { useLLMConfig, FeatureStatus } from '@/hooks/use-llm-config';
@@ -56,6 +56,8 @@ const NewsPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [databases, setDatabases] = useState<string[]>([]);
+  const [customSQL, setCustomSQL] = useState('');
+  const [customSQLMode, setCustomSQLMode] = useState(false);
   const featureStatus: FeatureStatus | undefined = config.featureStatus;
 
   const handleSettingsClick = () => {
@@ -183,6 +185,79 @@ const NewsPage: React.FC = () => {
     }
   };
 
+  // 高级自定义SQL查询
+  const handleCustomQuery = async () => {
+    if (!isDatabaseAvailable) {
+      toast({
+        title: t('databaseNotAvailable'),
+        description: t('databaseNotAvailableDesc'),
+        variant: 'destructive',
+      });
+      return;
+    }
+    if (!customSQL.trim()) {
+      toast({
+        title: t('queryFailed'),
+        description: t('请输入自定义SQL语句'),
+        variant: 'destructive',
+      });
+      return;
+    }
+    setLoading(true);
+    try {
+      const mcpService = MCPService.getInstance();
+      await mcpService.initialize(config.mcpUrl);
+      const tools = mcpService.getTools();
+      const queryTool = tools.find((tool: MCPTool) => tool.name === 'query_databases');
+      if (!queryTool) throw new Error('Query tool not found');
+      const result = await queryTool.execute({
+        database_names: databases.length > 0 ? databases : [],
+        sql: customSQL
+      });
+      if (result && Array.isArray(result) && result.length > 0 && result[0]?.text) {
+        const newsData: NewsItem[] = [];
+        try {
+          const responseData = JSON.parse(result[0].text);
+          if (Array.isArray(responseData)) {
+            responseData.forEach((dbResult: DatabaseResult) => {
+              if (dbResult.contents && Array.isArray(dbResult.contents)) {
+                dbResult.contents.forEach((item: DatabaseContent) => {
+                  newsData.push({
+                    id: String(item.id || `${Date.now()}-${Math.random()}`),
+                    title: String(item.title || 'Untitled'),
+                    text: String(item.text || ''),
+                    url: String(item.url || ''),
+                    tags: item.tags ? (typeof item.tags === 'string' ? JSON.parse(item.tags) : item.tags) : [],
+                    type: String(item.type || 'news'),
+                    date: item.createtime ? new Date(item.createtime).toISOString() : new Date().toISOString()
+                  });
+                });
+              }
+            });
+          }
+        } catch (parseError) {
+          console.error('Failed to parse database response:', parseError);
+          throw new Error('Invalid database response format');
+        }
+        setNewsItems(newsData);
+        toast({
+          title: t('querySuccess'),
+          description: t('querySuccessDesc', { count: newsData.length }),
+        });
+      }
+      await mcpService.disconnect();
+    } catch (error) {
+      console.error('Failed to query news data:', error);
+      toast({
+        title: t('queryFailed'),
+        description: t('queryFailedDesc', { error: error instanceof Error ? error.message : t('unknownError') }),
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // 页面渲染时如果featureStatus为空，提示用户去设置页面测试
   // 组件加载时不再主动检测数据库功能
   // useEffect(() => { checkDatabaseAvailability(); }, [config.mcpUrl]);
@@ -281,8 +356,8 @@ const NewsPage: React.FC = () => {
                     </Button>
                   </div>
 
-                  {/* 搜索框和刷新按钮 */}
-                  <div className="flex gap-2">
+                  {/* 搜索框和刷新按钮 + 高级SQL */}
+                  <div className="flex gap-2 items-start">
                     <div className="flex-1 relative">
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#6a7681]" />
                       <Input
@@ -290,11 +365,12 @@ const NewsPage: React.FC = () => {
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="pl-10 border-2 border-[#dde1e3] focus:border-[#0c7ff2] focus:ring-0 rounded-xl"
-                        onKeyDown={(e) => e.key === 'Enter' && queryNewsData()}
+                        onKeyDown={(e) => e.key === 'Enter' && (customSQLMode ? handleCustomQuery() : queryNewsData())}
+                        disabled={customSQLMode}
                       />
                     </div>
                     <Button
-                      onClick={queryNewsData}
+                      onClick={customSQLMode ? handleCustomQuery : queryNewsData}
                       disabled={loading || !isDatabaseAvailable}
                       className="bg-[#0c7ff2] hover:bg-[#0a6fd8] text-white px-4"
                     >
@@ -303,9 +379,42 @@ const NewsPage: React.FC = () => {
                       ) : (
                         <Search className="h-4 w-4" />
                       )}
-                      {loading ? t('searching') : t('search')}
+                      {loading ? t('searching') : (customSQLMode ? t('search') + ' SQL' : t('search'))}
+                    </Button>
+                    {/* 高级SQL切换按钮 */}
+                    <Button
+                      variant={customSQLMode ? 'default' : 'outline'}
+                      onClick={() => setCustomSQLMode((v) => !v)}
+                      className="ml-2"
+                    >
+                      {customSQLMode ? t('关闭高级查询') : t('高级查询')}
                     </Button>
                   </div>
+                  {/* 高级SQL输入区 */}
+                  {customSQLMode && (
+                    <div className="w-full flex gap-2 items-start mt-2">
+                      <Textarea
+                        placeholder="SELECT id, title, text, url, createtime, tags, type, workspace FROM contents WHERE ..."
+                        value={customSQL}
+                        onChange={(e) => setCustomSQL(e.target.value)}
+                        className="min-h-[80px] border-2 border-[#dde1e3] focus:border-[#0c7ff2] focus:ring-0 rounded-xl text-sm"
+                        rows={4}
+                        spellCheck={false}
+                      />
+                      <div className="flex flex-col gap-2">
+                        <Button
+                          onClick={handleCustomQuery}
+                          disabled={loading || !isDatabaseAvailable || !customSQL.trim()}
+                          className="bg-[#0c7ff2] hover:bg-[#0a6fd8] text-white"
+                        >
+                          {loading ? t('searching') : t('执行SQL')}
+                        </Button>
+                        <div className="text-xs text-[#6a7681] max-w-[180px] mt-1">
+                          {t('请谨慎输入SQL，结果将直接展示。')}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* 数据库状态 */}
