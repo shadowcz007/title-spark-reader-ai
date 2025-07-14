@@ -15,9 +15,11 @@ interface InputPageProps {
   title: string;
   onTitleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onGenerate: () => void;
+  forceSupplement: boolean;
+  onForceSupplementChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-const InputPage: React.FC<InputPageProps> = ({ title, onTitleChange, onGenerate }) => {
+const InputPage: React.FC<InputPageProps> = ({ title, onTitleChange, onGenerate, forceSupplement, onForceSupplementChange }) => {
   const { config } = useLLMConfig();
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-50 via-emerald-50 to-white flex items-center justify-center p-4">
@@ -75,9 +77,19 @@ const InputPage: React.FC<InputPageProps> = ({ title, onTitleChange, onGenerate 
                   value={title}
                   onChange={onTitleChange}
                 />
+                {/* 新增：强制信息补充勾选框 */}
+                <label className="flex items-center mt-2 text-sm text-[#6a7681] select-none cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="mr-2 accent-green-400"
+                    checked={forceSupplement}
+                    onChange={onForceSupplementChange}
+                  />
+                  强制信息补充（跳过自动判断，直接补充信息）
+                </label>
               </div>
               <Button
-                className="bg-[#0c7ff2] hover:bg-[#0a6fd8] text-white font-semibold py-2 px-4 rounded-lg flex items-center transition-colors"
+                className="bg-green-400 hover:bg-green-500 text-white font-semibold py-2 px-4 rounded-lg flex items-center transition-colors"
                 onClick={onGenerate}
                 disabled={!title.trim()}
               >

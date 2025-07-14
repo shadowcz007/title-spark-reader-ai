@@ -3,6 +3,7 @@ import { Card, Button, Input, Label, Select, SelectContent, SelectItem, SelectTr
 import { Settings as SettingsIcon, Save, Eye, EyeOff, TestTube, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useLLMConfig } from '@/hooks/use-llm-config';
+import {enrichInformationWithMCPBase} from '@/lib/utils'
 
 const Settings: React.FC = () => {
   const { config, updateConfig, resetConfig } = useLLMConfig();
@@ -14,6 +15,7 @@ const Settings: React.FC = () => {
   // Sync localConfig when config updates
   React.useEffect(() => {
     setLocalConfig(config);
+    console.log(config);
   }, [config]);
 
   // Save configuration
@@ -59,6 +61,41 @@ const Settings: React.FC = () => {
         title: "Connection Failed",
         description: `API connection test failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive",
+      });
+    } finally {
+      setIsTesting(false);
+    }
+  };
+
+  // Test MCP connection
+  const testMCP = async () => {
+    console.log(localConfig);
+    setIsTesting(true);
+    try {
+      const mcpResult = await enrichInformationWithMCPBase(
+        'test',
+        localConfig.apiKey,
+        localConfig.apiUrl,
+        localConfig.model,
+        localConfig.mcpUrl
+      );
+      if (mcpResult) {
+        toast({
+          title: 'MCP 服务连接成功',
+          description: 'MCP Browser Use Service URL 测试通过！',
+        });
+      } else {
+        toast({
+          title: 'MCP 服务连接失败',
+          description: 'MCP 服务未响应或返回错误',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'MCP 服务连接异常',
+        description: `MCP 服务测试异常: ${error instanceof Error ? error.message : '未知错误'}`,
+        variant: 'destructive',
       });
     } finally {
       setIsTesting(false);
@@ -202,7 +239,7 @@ const Settings: React.FC = () => {
                 </Button>
                 
                 <Button
-                  onClick={testAPI}
+                  onClick={testMCP}
                   disabled={isTesting}
                   variant="outline"
                   className="border-[#dde1e3] text-[#121416] hover:bg-[#f8f9fa] px-4 py-2 rounded-lg flex items-center transition-colors"
@@ -210,6 +247,15 @@ const Settings: React.FC = () => {
                   <TestTube className="h-4 w-4 mr-2" />
                   {isTesting ? 'Testing...' : 'Test Connection'}
                 </Button>
+                {/* <Button
+                  onClick={testMCP}
+                  disabled={isTesting}
+                  variant="outline"
+                  className="border-[#dde1e3] text-[#121416] hover:bg-[#f8f9fa] px-4 py-2 rounded-lg flex items-center transition-colors"
+                >
+                  <TestTube className="h-4 w-4 mr-2" />
+                  {isTesting ? 'Testing...' : '测试 MCP 服务'}
+                </Button> */}
                 
                 <Button
                   onClick={resetToDefault}

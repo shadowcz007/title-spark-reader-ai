@@ -130,8 +130,8 @@ export const ReaderPersonas: React.FC<ReaderPersonasProps> = ({
             key={persona.id}
             className={`w-32 h-40 flex flex-col items-center justify-center rounded-2xl border-2 p-2 shadow transition-all duration-300 cursor-pointer bg-white/90
               ${isSelected
-                ? 'border-[#0c7ff2] bg-blue-50 shadow-xl'
-                : 'border-[#dde1e3] hover:border-[#0c7ff2] hover:shadow-lg'}
+                ? 'border-green-400 bg-green-50 shadow-xl'
+                : 'border-[#dde1e3] hover:border-green-400 hover:shadow-lg'}
             `}
             onClick={() => onSelectPersona(persona)}
           >

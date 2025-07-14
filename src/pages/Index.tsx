@@ -6,21 +6,17 @@ import { ReaderPersonas } from '@/components/ReaderPersonas';
 import { MultiReviewResults } from '@/components/MultiReviewResults';
 import { TitlePreview } from '@/components/TitlePreview';
 import { useLLMConfig } from '@/hooks/use-llm-config';
-import { ProgressStage, ProgressState, Persona, Review } from '@/types'; // Import Persona and Review from @/types
+import { ProgressStage, ProgressState, Persona, Review } from '@/types';
 import InputPage from '../pages/InputPage';
 import ProgressPage from '../pages/ProgressPage';
 import ResultsPage from '../pages/ResultsPage';
 import Header from '@/components/Header';
 import { useNavigate } from 'react-router-dom';
+import { enrichInformationWithMCP } from '@/lib/utils';
+import { checkInformationSufficiency, generateMultipleTitlesWithProgress, VariantTitle } from '@/lib/utils';
 
 // Import all reader persona data
 import { personas } from '@/components/ReaderPersonas';
-
-interface VariantTitle {
-  title: string;
-  angle: string;
-  focus: string;
-}
 
 const Index = () => {
   const { config } = useLLMConfig();
@@ -157,72 +153,7 @@ const Index = () => {
     }
   };
 
-  // Rewrite the function to generate multiple titles with detailed progress
-  const generateMultipleTitlesWithProgress = async (): Promise<VariantTitle[]> => {
-    if (!title.trim()) return [];
-    
-    try {
-      // Stage 1: Check information sufficiency
-      setProgressState({
-        stage: ProgressStage.CHECKING_INFO,
-        currentStep: 1,
-        totalSteps: 5,
-        currentTitle: '',
-        currentPersona: '',
-        stageDescription: 'Checking title information sufficiency...'
-      });
-
-      const sufficiencyCheck = await checkInformationSufficiency(title);
-      
-      // Stage 2: If information is insufficient, enrich it
-      let additionalContext = '';
-      if (!sufficiencyCheck.isSufficient) {
-        setProgressState(prev => ({
-          ...prev,
-          stage: ProgressStage.ENRICHING_INFO,
-          currentStep: 2,
-          stageDescription: 'Enriching title information...'
-        }));
-        
-        const enrichedInfo = await enrichInformationWithLLM(title);
-        if (enrichedInfo) {
-          additionalContext = `\nAdditional context: ${enrichedInfo}`;
-        }
-      } else {
-        setProgressState(prev => ({
-          ...prev,
-          currentStep: 2
-        }));
-      }
-
-      // Stage 3: Generate multiple angle titles
-      setProgressState(prev => ({
-        ...prev,
-        stage: ProgressStage.GENERATING_TITLES,
-        currentStep: 3,
-        stageDescription: 'Generating multi-angle title variants...'
-      }));
-
-      const systemPrompt = `You are a professional title optimization expert, skilled at generating diverse titles from different angles and focuses. Your only output must be a JSON array, do not include any additional text or Markdown code blocks.`;
-      const userPrompt = `Based on the following title, generate 5 title variants with different angles and focuses, ensuring diversity:\n\nOriginal title: ${title}${additionalContext}\n\nPlease consider the following angles:\n1. Emotional angle - Evoke reader emotional resonance\n2. Practical angle - Emphasize practical value and operability\n3. Curiosity angle - Spark reader curiosity\n4. Authority angle - Reflect professionalism and authority\n5. Story angle - Use storytelling to attract readers\n\nYour output must be a JSON array in the following format:\n[\n  {\n    "title": "Generated title",\n    "angle": "Angle description",\n    "focus": "Focus description"\n  }\n]`;
-      const response = await callLLMAPI(systemPrompt, userPrompt);
-      
-      let jsonString = response;
-      // Try to extract JSON from Markdown code block
-      const jsonMatch = response.match(/```json\n([\s\S]*?)\n```/);
-      if (jsonMatch && jsonMatch[1]) {
-        jsonString = jsonMatch[1];
-      }
-
-      const generated: VariantTitle[] = JSON.parse(jsonString);
-      setGeneratedVariants(generated);
-      return generated;
-    } catch (error) {
-      console.error('Failed to generate multi-angle titles:', error);
-      setError('Failed to generate titles, please try again.');
-      return generateFallbackTitles(title); // Return fallback titles
-    }
-  };
+  // 移除本地 generateMultipleTitlesWithProgress，直接用 utils.ts 的
 
   // Check information sufficiency function
   const checkInformationSufficiency = async (title: string): Promise<{ isSufficient: boolean; reason: string }> => {
@@ -239,18 +170,6 @@ const Index = () => {
     } catch (error) {
       console.error('Failed to check information sufficiency:', error);
       return { isSufficient: true, reason: 'Check failed, default to sufficient' };
-    }
-  };
-
-  // Enrich information function
-  const enrichInformationWithLLM = async (title: string): Promise<string> => {
-    const systemPrompt = `You are a creative writing assistant, skilled at expanding and supplementing information based on brief input to make it more detailed and descriptive.`;
-    const userPrompt = `Please expand some related background, themes, or potential content based on the following title to make it richer. Only return the expanded content, no additional explanation. Title: ${title}`;
-    try {
-      return await callLLMAPI(systemPrompt, userPrompt);
-    } catch (error) {
-      console.error('Failed to enrich information:', error);
-      return '';
     }
   };
 
@@ -274,10 +193,15 @@ const Index = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState('');
   const [generatedVariants, setGeneratedVariants] = useState<VariantTitle[]>([]);
+  const [forceSupplement, setForceSupplement] = useState(false);
   
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setTitle(e.target.value);
+  };
+
+  const handleForceSupplementChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForceSupplement(e.target.checked);
   };
 
   const handleGenerate = async () => {
@@ -310,7 +234,14 @@ const Index = () => {
         stageDescription: 'Checking title information sufficiency...'
       });
 
-      const variants = await generateMultipleTitlesWithProgress();
+      const variants = await generateMultipleTitlesWithProgress(
+        title,
+        config.apiKey,
+        config.apiUrl,
+        config.model,
+        config.mcpUrl,
+        generateFallbackTitles
+      );
       const allReviews: Review[] = [];
       const totalReviews = variants.length * selectedPersonas.length;
       let completedReviews = 0;
@@ -405,6 +336,8 @@ const Index = () => {
             title={title}
             onTitleChange={handleTitleChange}
             onGenerate={handleGenerate}
+            forceSupplement={forceSupplement}
+            onForceSupplementChange={handleForceSupplementChange}
           />
         )}
         {currentPage === 'personas' && (
@@ -441,7 +374,7 @@ const Index = () => {
                 {/* Continue button */}
                 <div className="flex justify-center">
                   <Button
-                    className="bg-[#0c7ff2] hover:bg-[#0a6fd8] text-white font-semibold py-2 px-4 rounded-lg flex items-center transition-colors"
+                    className="bg-green-400 hover:bg-green-500 text-white font-semibold py-2 px-4 rounded-lg flex items-center transition-colors"
                     onClick={handlePersonasContinue}
                   >
                     <span>Continue Analysis</span>
@@ -454,53 +387,7 @@ const Index = () => {
         {currentPage === 'progress' && (
           <div className="relative">
             <ProgressPage progressState={progressState} />
-            {/* Test buttons - only show in development environment */}
-            {process.env.NODE_ENV === 'development' && (
-              <div className="fixed top-4 right-4 flex gap-2">
-                <Button
-                  className="border border-[#0c7ff2] text-[#0c7ff2] font-semibold py-2 px-4 rounded-lg flex items-center transition-colors hover:bg-blue-50"
-                  size="sm"
-                  onClick={() => setProgressState({
-                    stage: ProgressStage.CHECKING_INFO,
-                    currentStep: 1,
-                    totalSteps: 5,
-                    currentTitle: 'Test Title',
-                    currentPersona: '',
-                    stageDescription: 'Checking title information sufficiency...'
-                  })}
-                >
-                  Test Check Stage
-                </Button>
-                <Button
-                  className="border border-[#0c7ff2] text-[#0c7ff2] font-semibold py-2 px-4 rounded-lg flex items-center transition-colors hover:bg-blue-50"
-                  size="sm"
-                  onClick={() => setProgressState({
-                    stage: ProgressStage.GENERATING_REVIEWS,
-                    currentStep: 3,
-                    totalSteps: 11,
-                    currentTitle: 'Test Title Variant',
-                    currentPersona: 'Professional',
-                    stageDescription: 'Generating review for Professional...'
-                  })}
-                >
-                  Test Review Stage
-                </Button>
-                <Button
-                  className="border border-[#0c7ff2] text-[#0c7ff2] font-semibold py-2 px-4 rounded-lg flex items-center transition-colors hover:bg-blue-50"
-                  size="sm"
-                  onClick={() => setProgressState({
-                    stage: ProgressStage.COMPLETED,
-                    currentStep: 11,
-                    totalSteps: 11,
-                    currentTitle: '',
-                    currentPersona: '',
-                    stageDescription: 'Analysis completed!'
-                  })}
-                >
-                  Test Completion
-                </Button>
-              </div>
-            )}
+           
           </div>
         )}
         {currentPage === 'results' && (
